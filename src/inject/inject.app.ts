@@ -42,7 +42,7 @@ function start() {
       loggerAfter: (url, _, __, args) => {
         if (args[0] instanceof MediaSource) {
           captured.mediaSourceUrl = url;
-          console.debug(`%s=createObjectURL(mediaSource)`, url);
+          console.debug(`createObjectURL(mediaSource)`, url);
         }
       },
     },

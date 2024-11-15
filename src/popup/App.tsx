@@ -1,12 +1,11 @@
-import { createRoot } from 'react-dom/client'
-import './styles.css'
+import { createRoot } from 'react-dom/client';
+import './styles.css';
+import { mockBrowser } from '../common/browser';
+
+mockBrowser();
 
 function App() {
-  return (
-    <>
-      Popup
-    </>
-  );
+  return <>Popup</>;
 }
 
 function start() {

@@ -1,3 +1,7 @@
+import { mockBrowser } from '../common/browser';
+
+mockBrowser();
+
 browser.runtime.onInstalled.addListener(() => {
-  console.log('browser.runtime.onInstalled');
+  console.debug('browser.runtime.onInstalled');
 });
