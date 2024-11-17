@@ -1,66 +1,120 @@
-import { type SearchByParams, type MediaStorageItem } from './storage.types';
+import { isInSourceBuffers } from '../detect';
+import {
+  type SearchByParams,
+  type MediaStorageItem,
+  type MediaSegment,
+  type PartialMediaStorageItem,
+  type SourceBufferInfo,
+} from './storage.types';
+import { isAudioSourceBuffer, isVideoSourceBuffer } from './storage.utils';
 
 export class MediaStorage {
   store: MediaStorageItem[] = [];
 
+  static createItem(partial: PartialMediaStorageItem = {}): MediaStorageItem {
+    return { info: new Map(), ...partial };
+  }
+
+  static createSourceBufferInfo(
+    sourceBufferInfo: Partial<
+      Omit<SourceBufferInfo, 'mimeType' | 'isVideo' | 'isAudio'>
+    > & {
+      mimeType: SourceBufferInfo['mimeType'];
+    },
+  ): SourceBufferInfo {
+    return {
+      segments: [],
+      isVideo: isVideoSourceBuffer(sourceBufferInfo.mimeType),
+      isAudio: isAudioSourceBuffer(sourceBufferInfo.mimeType),
+      ...sourceBufferInfo,
+    };
+  }
+
   find(item: SearchByParams): {
-    foundIndex: number;
-    found?: MediaStorageItem;
+    itemIndex: number;
+    item?: MediaStorageItem;
   } {
-    const foundIndex = this.store.findIndex((curItem) => {
+    const itemIndex = this.store.findIndex((curItem) => {
       let found = false;
       if (item.mediaSource) {
         found = curItem.mediaSource === item.mediaSource;
       } else if (!found && item.mediaSourceUrl) {
         found = curItem.mediaSourceUrl === item.mediaSourceUrl;
       } else if (!found && item.sourceBuffer) {
-        // Array.prototype.indexOf.call(curItem.mediaSource.sourceBuffers, item.sourceBuffer)
-        for (const sourceBuffer of curItem?.mediaSource.sourceBuffers) {
-          found = sourceBuffer === item.sourceBuffer;
-          if (found) {
-            break;
-          }
-        }
+        found = isInSourceBuffers(curItem.mediaSource, item.sourceBuffer);
       }
       return found;
     });
 
-    return { foundIndex, found: this.store[foundIndex] };
+    return { itemIndex, item: this.store[itemIndex] };
+  }
+
+  findSourceBufferInfo(sourceBuffer: SourceBuffer): ReturnType<
+    MediaStorage['find']
+  > & {
+    sourceBufferInfo?: SourceBufferInfo;
+  } {
+    const result = this.find({ sourceBuffer });
+    const { item } = result;
+    if (item) {
+      const sourceBufferInfo = item.info.get(sourceBuffer);
+      return { ...result, sourceBufferInfo };
+    }
+    return result;
   }
 
   addByMediaSource(mediaSource: MediaSource): MediaStorageItem {
-    const { found } = this.find({ mediaSource });
-    if (!found) {
-      const newItem: MediaStorageItem = { mediaSource };
+    const { item } = this.find({ mediaSource });
+    if (!item) {
+      const newItem = MediaStorage.createItem({ mediaSource });
       this.store.push(newItem);
       return newItem;
     }
-    return found;
+    return item;
   }
 
-  assignToItem(
-    item: MediaStorageItem,
-    assignment: Partial<MediaStorageItem>,
-  ): MediaStorageItem | undefined {
-    const foundIndex = this.store.indexOf(item);
-    if (foundIndex > -1) {
-      this.store[foundIndex] = { ...item, ...assignment };
-      return this.store[foundIndex];
+  addMimeType(
+    sourceBuffer: SourceBuffer,
+    mimeType: string,
+  ): ReturnType<MediaStorage['findSourceBufferInfo']> {
+    const result = this.findSourceBufferInfo(sourceBuffer);
+    const { item, sourceBufferInfo } = result;
+    if (item) {
+      if (sourceBufferInfo) {
+        console.warn('SourceBufferInfo already present');
+      } else {
+        item.info.set(
+          sourceBuffer,
+          MediaStorage.createSourceBufferInfo({ mimeType }),
+        );
+      }
     }
+    return result;
+  }
+
+  addMediaSegment(
+    sourceBuffer: SourceBuffer,
+    mediaSegment: MediaSegment,
+  ): ReturnType<MediaStorage['findSourceBufferInfo']> {
+    const result = this.findSourceBufferInfo(sourceBuffer);
+    const { sourceBufferInfo } = result;
+    if (sourceBufferInfo) {
+      sourceBufferInfo.segments.push(mediaSegment);
+    } else {
+      console.warn('SourceBufferInfo not found');
+    }
+    return result;
   }
 
   assignToAny(
     existing: Partial<MediaStorageItem>,
     assignment: Partial<MediaStorageItem>,
-  ): MediaStorageItem {
-    const { found, foundIndex } = this.find(existing);
-    if (found) {
-      this.store[foundIndex] = { ...found, ...assignment };
-      return found;
-    } else {
-      const newItem = { ...assignment };
-      this.store.push(newItem);
-      return newItem;
+  ): ReturnType<MediaStorage['find']> {
+    const result = this.find(existing);
+    const { item, itemIndex } = result;
+    if (item) {
+      this.store[itemIndex] = { ...item, ...assignment };
     }
+    return result;
   }
 }
