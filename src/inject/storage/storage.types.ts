@@ -11,6 +11,8 @@ export type MediaSegment = { from: number; to: number };
 export type MediaStorageItem = {
   mediaSource?: MediaSource;
   mediaSourceUrl?: string;
+  htmlVideoElement?: HTMLVideoElement;
+  htmlSourceElement?: HTMLSourceElement;
   info: Map<SourceBuffer, SourceBufferInfo>;
 };
 

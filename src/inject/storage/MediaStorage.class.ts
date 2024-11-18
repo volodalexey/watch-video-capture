@@ -42,6 +42,10 @@ export class MediaStorage {
         found = curItem.mediaSourceUrl === item.mediaSourceUrl;
       } else if (!found && item.sourceBuffer) {
         found = isInSourceBuffers(curItem.mediaSource, item.sourceBuffer);
+      } else if (!found && item.htmlSourceElement) {
+        found = curItem.htmlSourceElement === item.htmlSourceElement;
+      } else if (!found && item.htmlVideoElement) {
+        found = curItem.htmlVideoElement === item.htmlVideoElement;
       }
       return found;
     });

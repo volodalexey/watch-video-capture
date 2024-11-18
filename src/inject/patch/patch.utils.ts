@@ -33,6 +33,11 @@ export function makeDescriptorPatch<T, K extends keyof T>(
       objectIn,
       objectInProperty,
     );
+    if (typeof descriptor.value === 'function') {
+      throw new Error(
+        `Please use makePropertyPatch() instead for ${String(objectInProperty)}`,
+      );
+    }
     Object.defineProperty(objectIn, objectInProperty, {
       ...descriptor,
       get:

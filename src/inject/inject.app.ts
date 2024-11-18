@@ -12,11 +12,16 @@ function start() {
     return (e: Event) => {
       if (e.target instanceof SourceBuffer) {
         const sourceBuffer = e.target;
-        const { sourceBufferInfo } = storage.findSourceBufferInfo(sourceBuffer);
+        const { item, sourceBufferInfo } =
+          storage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
           const mediaSegment = calcMediaSegment(e.target);
           sourceBufferInfo.segments.push(mediaSegment);
-          console.log('handleSourceBufferUpdateEnd', mediaSegment);
+          console.debug(
+            'handleSourceBufferUpdateEnd',
+            item.mediaSource.duration,
+            mediaSegment,
+          );
         }
       }
       callback(e);
@@ -121,15 +126,66 @@ function start() {
   makePropertyPatch(URL, 'createObjectURL', {
     apply: {
       loggerAfter: (url, _, __, args) => {
-        const mediSource = args[0];
-        if (mediSource instanceof MediaSource) {
-          console.debug(
-            `URL.createObjectURL(mediaSource)`,
-            storage.assignToAny(
-              { mediaSource: mediSource },
-              { mediaSource: mediSource, mediaSourceUrl: url },
-            ),
-          );
+        const mediaSource = args[0];
+        if (mediaSource instanceof MediaSource) {
+          const item = storage.addByMediaSource(mediaSource);
+          item.mediaSourceUrl = url;
+          console.debug(`URL.createObjectURL(mediaSource)`, item);
+        }
+      },
+    },
+  });
+  makeDescriptorPatch(HTMLSourceElement.prototype, 'src', {
+    set: {
+      loggerBefore(target, value) {
+        if (target instanceof HTMLSourceElement) {
+          const { item } = storage.find({ mediaSourceUrl: value });
+          if (item) {
+            item.htmlSourceElement = target;
+            if (
+              target.parentElement &&
+              target.parentElement instanceof HTMLVideoElement
+            ) {
+              item.htmlVideoElement = target.parentElement;
+            }
+            console.debug(`HTMLSourceElement.src=%s`, value);
+          }
+        }
+      },
+    },
+  });
+  makeDescriptorPatch(HTMLMediaElement.prototype, 'src', {
+    set: {
+      loggerBefore(target, value) {
+        if (target instanceof HTMLVideoElement) {
+          const { item } = storage.find({ mediaSourceUrl: value });
+          if (item) {
+            item.htmlVideoElement = target;
+            if (
+              target.parentElement &&
+              target.parentElement instanceof HTMLVideoElement
+            ) {
+              item.htmlVideoElement = target.parentElement;
+            }
+            console.debug(`HTMLVideoElement.src=%s`, value);
+          }
+        }
+      },
+    },
+  });
+  makePropertyPatch(Node.prototype, 'appendChild', {
+    apply: {
+      loggerBefore(_, node, args) {
+        const value = args[0];
+        if (
+          node instanceof HTMLVideoElement &&
+          value instanceof HTMLSourceElement
+        ) {
+          const { item } = storage.find({ htmlSourceElement: value });
+          if (item) {
+            item.htmlVideoElement = node;
+            console.debug(`HTMLVideoElement.appendChild(HTMLSourceElement)`);
+          }
         }
       },
     },
