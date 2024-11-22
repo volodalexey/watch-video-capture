@@ -1,10 +1,8 @@
-import { EventHandler } from 'react';
-import { calcMediaSegment } from './detect';
+import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
 import { MediaStorage } from './storage';
 
 function start() {
-  window.document.body.style.backgroundColor = 'black';
   const storage = new MediaStorage();
   console.debug('%c inject.app start()', 'background: #eeeeee; color: #c00c00');
 
@@ -15,12 +13,14 @@ function start() {
         const { item, sourceBufferInfo } =
           storage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-          const mediaSegment = calcMediaSegment(e.target);
-          sourceBufferInfo.segments.push(mediaSegment);
           console.debug(
-            'handleSourceBufferUpdateEnd',
             item.mediaSource.duration,
-            mediaSegment,
+            item.htmlVideoElement.duration,
+          );
+          console.debug(
+            'handleSourceBufferUpdateEnd buffered=%s seekable=%s',
+            printTimeRanges(item.htmlVideoElement.buffered),
+            printTimeRanges(item.htmlVideoElement.seekable),
           );
         }
       }
@@ -146,7 +146,7 @@ function start() {
               target.parentElement &&
               target.parentElement instanceof HTMLVideoElement
             ) {
-              item.htmlVideoElement = target.parentElement;
+              MediaStorage.setHTMLVideoElement(item, target.parentElement);
             }
             console.debug(`HTMLSourceElement.src=%s`, value);
           }
@@ -157,17 +157,19 @@ function start() {
   makeDescriptorPatch(HTMLMediaElement.prototype, 'src', {
     set: {
       loggerBefore(target, value) {
-        if (target instanceof HTMLVideoElement) {
+        if (target instanceof HTMLElement) {
           const { item } = storage.find({ mediaSourceUrl: value });
           if (item) {
-            item.htmlVideoElement = target;
-            if (
+            if (target instanceof HTMLVideoElement) {
+              MediaStorage.setHTMLVideoElement(item, target);
+              console.debug(`HTMLVideoElement.src=%s`, value);
+            } else if (
               target.parentElement &&
               target.parentElement instanceof HTMLVideoElement
             ) {
-              item.htmlVideoElement = target.parentElement;
+              MediaStorage.setHTMLVideoElement(item, target.parentElement);
+              console.debug(`[parent]HTMLVideoElement.src=%s`, value);
             }
-            console.debug(`HTMLVideoElement.src=%s`, value);
           }
         }
       },
@@ -183,7 +185,7 @@ function start() {
         ) {
           const { item } = storage.find({ htmlSourceElement: value });
           if (item) {
-            item.htmlVideoElement = node;
+            MediaStorage.setHTMLVideoElement(item, node);
             console.debug(`HTMLVideoElement.appendChild(HTMLSourceElement)`);
           }
         }

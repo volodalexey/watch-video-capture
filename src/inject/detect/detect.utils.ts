@@ -3,7 +3,8 @@ import { MediaSegment } from '../storage/storage.types';
 export function calcMediaSegment(sourceBuffer: SourceBuffer) {
   const mediaSegment: MediaSegment = {
     from: 0,
-    to: sourceBuffer.timestampOffset,
+    to: 0,
+    timestampOffset: sourceBuffer.timestampOffset,
   };
   if (sourceBuffer.buffered.length > 0) {
     const timeRangeIndex = 0;
@@ -13,6 +14,16 @@ export function calcMediaSegment(sourceBuffer: SourceBuffer) {
   return mediaSegment;
 }
 
+export function printTimeRanges(timeRanges: TimeRanges) {
+  const total: Array<[number, number]> = [];
+  for (let i = 0; i < timeRanges.length; i++) {
+    const start = timeRanges.start(i);
+    const end = timeRanges.end(i);
+    total.push([start, end]);
+  }
+  return total.map(([start, end]) => `[${start}:${end}]`).join(' ');
+}
+
 export function isInSourceBuffers(
   mediaSource: MediaSource,
   sourceBuffer: SourceBuffer,
@@ -20,4 +31,12 @@ export function isInSourceBuffers(
   return (
     Array.prototype.indexOf.call(mediaSource.sourceBuffers, sourceBuffer) > -1
   );
+}
+
+export function isVideoSourceBuffer(mimeType: string) {
+  return mimeType.includes('video');
+}
+
+export function isAudioSourceBuffer(mimeType: string) {
+  return mimeType.includes('audio');
 }

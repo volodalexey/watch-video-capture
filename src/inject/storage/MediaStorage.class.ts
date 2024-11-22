@@ -1,4 +1,8 @@
-import { isInSourceBuffers } from '../detect';
+import {
+  isInSourceBuffers,
+  isAudioSourceBuffer,
+  isVideoSourceBuffer,
+} from '../detect';
 import {
   type SearchByParams,
   type MediaStorageItem,
@@ -6,13 +10,25 @@ import {
   type PartialMediaStorageItem,
   type SourceBufferInfo,
 } from './storage.types';
-import { isAudioSourceBuffer, isVideoSourceBuffer } from './storage.utils';
 
 export class MediaStorage {
   store: MediaStorageItem[] = [];
 
   static createItem(partial: PartialMediaStorageItem = {}): MediaStorageItem {
     return { info: new Map(), ...partial };
+  }
+
+  static setHTMLVideoElement(
+    item: MediaStorageItem,
+    htmlVideoElement: HTMLVideoElement,
+  ) {
+    if (item.htmlVideoElement) {
+      if (item.htmlVideoElement !== htmlVideoElement) {
+        console.warn('Different htmlVideoElement assignment');
+      }
+    } else {
+      item.htmlVideoElement = htmlVideoElement;
+    }
   }
 
   static createSourceBufferInfo(

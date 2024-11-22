@@ -6,7 +6,11 @@ export type SourceBufferInfo = {
   onUpdateEndMock?: EventListener;
   onUpdateEndOriginal?: EventListener;
 };
-export type MediaSegment = { from: number; to: number };
+export type MediaSegment = {
+  from: number;
+  to: number;
+  timestampOffset: number;
+};
 
 export type MediaStorageItem = {
   mediaSource?: MediaSource;
