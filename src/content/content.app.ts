@@ -1,4 +1,9 @@
 import { mockBrowser } from '../common/browser';
+import {
+  isInjectMessage,
+  sendContentToBackgroundMessage,
+  TInjectBufferMessage,
+} from '../common/message';
 
 mockBrowser();
 
@@ -22,6 +27,16 @@ async function start() {
 
   scriptTop.onload = removeScript;
   scriptTop.onerror = removeScript;
+
+  globalThis.addEventListener(
+    'message',
+    (e) => {
+      if (isInjectMessage(e.data)) {
+        sendContentToBackgroundMessage(e.data);
+      }
+    },
+    false,
+  );
 }
 
 start();

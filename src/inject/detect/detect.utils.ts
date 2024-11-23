@@ -1,4 +1,4 @@
-import { MediaSegment } from '../storage/storage.types';
+import { type MediaSegment } from '../MediaStorage';
 
 export function calcMediaSegment(sourceBuffer: SourceBuffer) {
   const mediaSegment: MediaSegment = {

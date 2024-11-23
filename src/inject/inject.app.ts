@@ -1,6 +1,7 @@
 import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
-import { MediaStorage } from './storage';
+import { MediaStorage } from './MediaStorage';
+import { sendInjectMessage } from '../common/message';
 
 function start() {
   const storage = new MediaStorage();
@@ -99,6 +100,10 @@ function start() {
         const { sourceBufferInfo } = storage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
           if (args[0] instanceof Uint8Array) {
+            sendInjectMessage({
+              type: 'buffer',
+              payload: { buffer: Array.from(args[0]) },
+            });
             console.debug(
               `SourceBuffer.appendBuffer(Uint8Array)`,
               args[0].byteOffset,
@@ -106,6 +111,12 @@ function start() {
               storage.find({ sourceBuffer }),
             );
           } else if (args[0] instanceof DataView) {
+            sendInjectMessage({
+              type: 'buffer',
+              payload: {
+                buffer: Array.from(new Uint8Array(args[0].buffer)),
+              },
+            });
             console.debug(
               `SourceBuffer.appendBuffer(DataView)`,
               args[0].byteOffset,
@@ -113,6 +124,10 @@ function start() {
               storage.find({ sourceBuffer }),
             );
           } else if (args[0] instanceof ArrayBuffer) {
+            sendInjectMessage({
+              type: 'buffer',
+              payload: { buffer: Array.from(new Uint8Array(args[0])) },
+            });
             console.debug(
               `SourceBuffer.appendBuffer(ArrayBuffer)`,
               args[0].byteLength,

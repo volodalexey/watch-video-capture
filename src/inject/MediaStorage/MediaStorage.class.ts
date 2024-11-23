@@ -9,7 +9,7 @@ import {
   type MediaSegment,
   type PartialMediaStorageItem,
   type SourceBufferInfo,
-} from './storage.types';
+} from './MediaStorage.types';
 
 export class MediaStorage {
   store: MediaStorageItem[] = [];
