@@ -2,9 +2,12 @@ import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
 import { MediaStorage } from './MediaStorage';
 import { sendInjectMessage } from '../common/message';
+import { IndexedDBStorage } from './IndexedDBStorage';
 
 function start() {
-  const storage = new MediaStorage();
+  const mediaStorage = new MediaStorage();
+  const indexedDbStorage = new IndexedDBStorage();
+  indexedDbStorage.tryInit();
   console.debug('%c inject.app start()', 'background: #eeeeee; color: #c00c00');
 
   function handleSourceBufferUpdateEnd(callback: EventListener) {
@@ -12,7 +15,7 @@ function start() {
       if (e.target instanceof SourceBuffer) {
         const sourceBuffer = e.target;
         const { item, sourceBufferInfo } =
-          storage.findSourceBufferInfo(sourceBuffer);
+          mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
           console.debug(
             item.mediaSource.duration,
@@ -35,7 +38,7 @@ function start() {
         if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
           const sourceBuffer = eventTarget;
           const { sourceBufferInfo } =
-            storage.findSourceBufferInfo(sourceBuffer);
+            mediaStorage.findSourceBufferInfo(sourceBuffer);
           if (sourceBufferInfo && sourceBufferInfo.isVideo) {
             if (sourceBufferInfo.onUpdateEndMock) {
               console.debug(`SKIP SourceBuffer.addEventListener('updateend')`);
@@ -58,7 +61,7 @@ function start() {
         if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
           const sourceBuffer = eventTarget;
           const { sourceBufferInfo } =
-            storage.findSourceBufferInfo(sourceBuffer);
+            mediaStorage.findSourceBufferInfo(sourceBuffer);
           if (sourceBufferInfo && sourceBufferInfo.isVideo) {
             if (sourceBufferInfo.onUpdateEndMock) {
               args[1] = sourceBufferInfo.onUpdateEndMock;
@@ -85,9 +88,9 @@ function start() {
   makePropertyPatch(MediaSource.prototype, 'addSourceBuffer', {
     apply: {
       loggerAfter: (sourceBuffer, _, mediaSource, args) => {
-        storage.addByMediaSource(mediaSource);
+        mediaStorage.addByMediaSource(mediaSource);
         const mimeType = args[0];
-        storage.addMimeType(sourceBuffer, mimeType);
+        mediaStorage.addMimeType(sourceBuffer, mimeType);
         if (mimeType.includes('video')) {
           console.debug(`MediaSource.addSourceBuffer(video)`, mimeType);
         }
@@ -97,7 +100,8 @@ function start() {
   makePropertyPatch(SourceBuffer.prototype, 'appendBuffer', {
     apply: {
       loggerBefore: (_, sourceBuffer, args) => {
-        const { sourceBufferInfo } = storage.findSourceBufferInfo(sourceBuffer);
+        const { sourceBufferInfo } =
+          mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
           if (args[0] instanceof Uint8Array) {
             sendInjectMessage({
@@ -108,7 +112,7 @@ function start() {
               `SourceBuffer.appendBuffer(Uint8Array)`,
               args[0].byteOffset,
               args[0].byteLength,
-              storage.find({ sourceBuffer }),
+              mediaStorage.find({ sourceBuffer }),
             );
           } else if (args[0] instanceof DataView) {
             sendInjectMessage({
@@ -121,7 +125,7 @@ function start() {
               `SourceBuffer.appendBuffer(DataView)`,
               args[0].byteOffset,
               args[0].byteLength,
-              storage.find({ sourceBuffer }),
+              mediaStorage.find({ sourceBuffer }),
             );
           } else if (args[0] instanceof ArrayBuffer) {
             sendInjectMessage({
@@ -131,7 +135,7 @@ function start() {
             console.debug(
               `SourceBuffer.appendBuffer(ArrayBuffer)`,
               args[0].byteLength,
-              storage.find({ sourceBuffer }),
+              mediaStorage.find({ sourceBuffer }),
             );
           }
         }
@@ -143,7 +147,7 @@ function start() {
       loggerAfter: (url, _, __, args) => {
         const mediaSource = args[0];
         if (mediaSource instanceof MediaSource) {
-          const item = storage.addByMediaSource(mediaSource);
+          const item = mediaStorage.addByMediaSource(mediaSource);
           item.mediaSourceUrl = url;
           console.debug(`URL.createObjectURL(mediaSource)`, item);
         }
@@ -154,7 +158,7 @@ function start() {
     set: {
       loggerBefore(target, value) {
         if (target instanceof HTMLSourceElement) {
-          const { item } = storage.find({ mediaSourceUrl: value });
+          const { item } = mediaStorage.find({ mediaSourceUrl: value });
           if (item) {
             item.htmlSourceElement = target;
             if (
@@ -173,7 +177,7 @@ function start() {
     set: {
       loggerBefore(target, value) {
         if (target instanceof HTMLElement) {
-          const { item } = storage.find({ mediaSourceUrl: value });
+          const { item } = mediaStorage.find({ mediaSourceUrl: value });
           if (item) {
             if (target instanceof HTMLVideoElement) {
               MediaStorage.setHTMLVideoElement(item, target);
@@ -198,7 +202,7 @@ function start() {
           node instanceof HTMLVideoElement &&
           value instanceof HTMLSourceElement
         ) {
-          const { item } = storage.find({ htmlSourceElement: value });
+          const { item } = mediaStorage.find({ htmlSourceElement: value });
           if (item) {
             MediaStorage.setHTMLVideoElement(item, node);
             console.debug(`HTMLVideoElement.appendChild(HTMLSourceElement)`);
