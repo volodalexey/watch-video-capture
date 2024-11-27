@@ -48,7 +48,7 @@ export function makeDescriptorPatch<T, K extends keyof T>(
               getLoggerAfter?.(result, this);
               return result;
             }
-          : undefined,
+          : descriptor.get,
       set:
         descriptor.set && setPatch
           ? function set(value) {
@@ -57,7 +57,7 @@ export function makeDescriptorPatch<T, K extends keyof T>(
               setLoggerAfter?.(result, this, value);
               return result;
             }
-          : undefined,
+          : descriptor.set,
     });
   }
 }

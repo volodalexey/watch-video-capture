@@ -2,17 +2,14 @@ export type SourceBufferInfo = {
   mimeType: string;
   isVideo: boolean;
   isAudio: boolean;
-  segments: MediaSegment[];
+  counter: number;
   onUpdateEndMock?: EventListener;
   onUpdateEndOriginal?: EventListener;
 };
-export type MediaSegment = {
-  from: number;
-  to: number;
-  timestampOffset: number;
-};
 
 export type MediaStorageItem = {
+  mediaId?: string;
+  mediaIdHash?: string;
   mediaSource?: MediaSource;
   mediaSourceUrl?: string;
   htmlVideoElement?: HTMLVideoElement;

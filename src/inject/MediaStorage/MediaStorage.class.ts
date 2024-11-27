@@ -1,50 +1,13 @@
-import {
-  isInSourceBuffers,
-  isAudioSourceBuffer,
-  isVideoSourceBuffer,
-} from '../detect';
+import { isInSourceBuffers } from '../detect';
 import {
   type SearchByParams,
   type MediaStorageItem,
-  type MediaSegment,
-  type PartialMediaStorageItem,
   type SourceBufferInfo,
 } from './MediaStorage.types';
+import { createMediaItem, createSourceBufferInfo } from './MediaStorage.utils';
 
 export class MediaStorage {
   store: MediaStorageItem[] = [];
-
-  static createItem(partial: PartialMediaStorageItem = {}): MediaStorageItem {
-    return { info: new Map(), ...partial };
-  }
-
-  static setHTMLVideoElement(
-    item: MediaStorageItem,
-    htmlVideoElement: HTMLVideoElement,
-  ) {
-    if (item.htmlVideoElement) {
-      if (item.htmlVideoElement !== htmlVideoElement) {
-        console.warn('Different htmlVideoElement assignment');
-      }
-    } else {
-      item.htmlVideoElement = htmlVideoElement;
-    }
-  }
-
-  static createSourceBufferInfo(
-    sourceBufferInfo: Partial<
-      Omit<SourceBufferInfo, 'mimeType' | 'isVideo' | 'isAudio'>
-    > & {
-      mimeType: SourceBufferInfo['mimeType'];
-    },
-  ): SourceBufferInfo {
-    return {
-      segments: [],
-      isVideo: isVideoSourceBuffer(sourceBufferInfo.mimeType),
-      isAudio: isAudioSourceBuffer(sourceBufferInfo.mimeType),
-      ...sourceBufferInfo,
-    };
-  }
 
   find(item: SearchByParams): {
     itemIndex: number;
@@ -86,7 +49,7 @@ export class MediaStorage {
   addByMediaSource(mediaSource: MediaSource): MediaStorageItem {
     const { item } = this.find({ mediaSource });
     if (!item) {
-      const newItem = MediaStorage.createItem({ mediaSource });
+      const newItem = createMediaItem({ mediaSource });
       this.store.push(newItem);
       return newItem;
     }
@@ -103,25 +66,8 @@ export class MediaStorage {
       if (sourceBufferInfo) {
         console.warn('SourceBufferInfo already present');
       } else {
-        item.info.set(
-          sourceBuffer,
-          MediaStorage.createSourceBufferInfo({ mimeType }),
-        );
+        item.info.set(sourceBuffer, createSourceBufferInfo({ mimeType }));
       }
-    }
-    return result;
-  }
-
-  addMediaSegment(
-    sourceBuffer: SourceBuffer,
-    mediaSegment: MediaSegment,
-  ): ReturnType<MediaStorage['findSourceBufferInfo']> {
-    const result = this.findSourceBufferInfo(sourceBuffer);
-    const { sourceBufferInfo } = result;
-    if (sourceBufferInfo) {
-      sourceBufferInfo.segments.push(mediaSegment);
-    } else {
-      console.warn('SourceBufferInfo not found');
     }
     return result;
   }

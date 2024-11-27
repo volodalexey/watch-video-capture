@@ -1,8 +1,13 @@
 import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
 import { MediaStorage } from './MediaStorage';
-import { sendInjectMessage } from '../common/message';
 import { IndexedDBStorage } from './IndexedDBStorage';
+import { hashCode } from '../common/browser';
+import {
+  checkMediaId,
+  setHTMLVideoElement,
+} from './MediaStorage/MediaStorage.utils';
+import { createBufferItem } from './IndexedDBStorage/IndexedDBStorage.utils';
 
 function start() {
   const mediaStorage = new MediaStorage();
@@ -17,10 +22,6 @@ function start() {
         const { item, sourceBufferInfo } =
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-          console.debug(
-            item.mediaSource.duration,
-            item.htmlVideoElement.duration,
-          );
           console.debug(
             'handleSourceBufferUpdateEnd buffered=%s seekable=%s',
             printTimeRanges(item.htmlVideoElement.buffered),
@@ -85,6 +86,13 @@ function start() {
       },
     },
   });
+  makeDescriptorPatch(MediaSource.prototype, 'duration', {
+    set: {
+      loggerBefore(_, value) {
+        console.debug(`MediaSource.duration=%s`, value);
+      },
+    },
+  });
   makePropertyPatch(MediaSource.prototype, 'addSourceBuffer', {
     apply: {
       loggerAfter: (sourceBuffer, _, mediaSource, args) => {
@@ -100,14 +108,19 @@ function start() {
   makePropertyPatch(SourceBuffer.prototype, 'appendBuffer', {
     apply: {
       loggerBefore: (_, sourceBuffer, args) => {
-        const { sourceBufferInfo } =
+        const { sourceBufferInfo, item } =
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
+          checkMediaId(item);
+          console.debug(item.mediaId, item.mediaIdHash);
           if (args[0] instanceof Uint8Array) {
-            sendInjectMessage({
-              type: 'buffer',
-              payload: { buffer: Array.from(args[0]) },
-            });
+            indexedDbStorage.saveBlob(
+              createBufferItem(
+                item.mediaIdHash,
+                sourceBufferInfo,
+                args[0].buffer,
+              ),
+            );
             console.debug(
               `SourceBuffer.appendBuffer(Uint8Array)`,
               args[0].byteOffset,
@@ -115,12 +128,6 @@ function start() {
               mediaStorage.find({ sourceBuffer }),
             );
           } else if (args[0] instanceof DataView) {
-            sendInjectMessage({
-              type: 'buffer',
-              payload: {
-                buffer: Array.from(new Uint8Array(args[0].buffer)),
-              },
-            });
             console.debug(
               `SourceBuffer.appendBuffer(DataView)`,
               args[0].byteOffset,
@@ -128,10 +135,6 @@ function start() {
               mediaStorage.find({ sourceBuffer }),
             );
           } else if (args[0] instanceof ArrayBuffer) {
-            sendInjectMessage({
-              type: 'buffer',
-              payload: { buffer: Array.from(new Uint8Array(args[0])) },
-            });
             console.debug(
               `SourceBuffer.appendBuffer(ArrayBuffer)`,
               args[0].byteLength,
@@ -165,7 +168,7 @@ function start() {
               target.parentElement &&
               target.parentElement instanceof HTMLVideoElement
             ) {
-              MediaStorage.setHTMLVideoElement(item, target.parentElement);
+              setHTMLVideoElement(item, target.parentElement);
             }
             console.debug(`HTMLSourceElement.src=%s`, value);
           }
@@ -180,17 +183,24 @@ function start() {
           const { item } = mediaStorage.find({ mediaSourceUrl: value });
           if (item) {
             if (target instanceof HTMLVideoElement) {
-              MediaStorage.setHTMLVideoElement(item, target);
+              setHTMLVideoElement(item, target);
               console.debug(`HTMLVideoElement.src=%s`, value);
             } else if (
               target.parentElement &&
               target.parentElement instanceof HTMLVideoElement
             ) {
-              MediaStorage.setHTMLVideoElement(item, target.parentElement);
+              setHTMLVideoElement(item, target.parentElement);
               console.debug(`[parent]HTMLVideoElement.src=%s`, value);
             }
           }
         }
+      },
+    },
+  });
+  makeDescriptorPatch(HTMLMediaElement.prototype, 'duration', {
+    set: {
+      loggerBefore(_, value) {
+        console.debug(`HTMLMediaElement.duration=%s`, value);
       },
     },
   });
@@ -204,7 +214,7 @@ function start() {
         ) {
           const { item } = mediaStorage.find({ htmlSourceElement: value });
           if (item) {
-            MediaStorage.setHTMLVideoElement(item, node);
+            setHTMLVideoElement(item, node);
             console.debug(`HTMLVideoElement.appendChild(HTMLSourceElement)`);
           }
         }
@@ -213,4 +223,6 @@ function start() {
   });
 }
 
-start();
+if (globalThis.top === globalThis.self) {
+  start();
+}

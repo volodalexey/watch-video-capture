@@ -12,7 +12,7 @@ browser.runtime.onMessage.addListener((e: unknown) => {
     switch (e.type) {
       case 'buffer': {
         const received = new Uint8Array(e.payload.buffer);
-        console.debug(received);
+        // console.debug(received);
       }
     }
   }
