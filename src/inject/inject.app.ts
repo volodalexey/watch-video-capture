@@ -2,7 +2,6 @@ import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
 import { MediaStorage } from './MediaStorage';
 import { IndexedDBStorage } from './IndexedDBStorage';
-import { hashCode } from '../common/browser';
 import {
   checkMediaId,
   setHTMLVideoElement,
@@ -31,6 +30,27 @@ function start() {
       }
       callback(e);
     };
+  }
+
+  function handleMediaSourceEnded(e: Event) {
+    if (e.target instanceof MediaSource) {
+      const { item } = mediaStorage.find({ mediaSource: e.target });
+      if (item) {
+        indexedDbStorage.getAllByMediaIndex(item.mediaId).then((result) => {
+          result.sort((a, b) => a.index - b.index);
+          console.debug(result);
+          const a = document.createElement('a');
+          const contentType = 'application/octet-stream';
+          const blob = new Blob(
+            result.map((r) => r.buffer),
+            { type: contentType },
+          );
+          a.href = window.URL.createObjectURL(blob);
+          // a.download = filename;
+          a.click();
+        });
+      }
+    }
   }
 
   makePropertyPatch(EventTarget.prototype, 'addEventListener', {
@@ -96,7 +116,7 @@ function start() {
   makePropertyPatch(MediaSource.prototype, 'addSourceBuffer', {
     apply: {
       loggerAfter: (sourceBuffer, _, mediaSource, args) => {
-        mediaStorage.addByMediaSource(mediaSource);
+        mediaStorage.addByMediaSource(mediaSource, handleMediaSourceEnded);
         const mimeType = args[0];
         mediaStorage.addMimeType(sourceBuffer, mimeType);
         if (mimeType.includes('video')) {
@@ -112,14 +132,9 @@ function start() {
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
           checkMediaId(item);
-          console.debug(item.mediaId, item.mediaIdHash);
           if (args[0] instanceof Uint8Array) {
-            indexedDbStorage.saveBlob(
-              createBufferItem(
-                item.mediaIdHash,
-                sourceBufferInfo,
-                args[0].buffer,
-              ),
+            indexedDbStorage.saveBufferItem(
+              createBufferItem(item, sourceBufferInfo, args[0].buffer),
             );
             console.debug(
               `SourceBuffer.appendBuffer(Uint8Array)`,
@@ -150,7 +165,10 @@ function start() {
       loggerAfter: (url, _, __, args) => {
         const mediaSource = args[0];
         if (mediaSource instanceof MediaSource) {
-          const item = mediaStorage.addByMediaSource(mediaSource);
+          const item = mediaStorage.addByMediaSource(
+            mediaSource,
+            handleMediaSourceEnded,
+          );
           item.mediaSourceUrl = url;
           console.debug(`URL.createObjectURL(mediaSource)`, item);
         }

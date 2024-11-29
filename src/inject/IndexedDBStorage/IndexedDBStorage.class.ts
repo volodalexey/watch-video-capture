@@ -1,8 +1,9 @@
-import { type BufferLikeItem } from './IndexedDBStorage.types';
+import { type BufferStorageIDBItem } from './IndexedDBStorage.types';
 
 export class IndexedDBStorage {
   dbName = 'watch-store';
   tableName = 'blobs';
+  indexName = 'mediaId';
   version = 1;
 
   db: IDBDatabase | null = null;
@@ -15,6 +16,12 @@ export class IndexedDBStorage {
     resolve: () => unknown;
     reject: (e: Error) => unknown;
     request: IDBRequest<IDBValidKey>;
+  } | null = null;
+  indexRequest: {
+    response: BufferStorageIDBItem[];
+    resolve: (items: BufferStorageIDBItem[]) => unknown;
+    reject: (e: Error) => unknown;
+    request: IDBRequest<IDBCursor>;
   } | null = null;
 
   tryInit(): Promise<IDBDatabase> {
@@ -87,9 +94,14 @@ export class IndexedDBStorage {
       const { reject } = this.openRequest;
       if (e && e.target instanceof IDBOpenDBRequest) {
         this.db = e.target.result;
-        this.db.createObjectStore(this.tableName, {
-          keyPath: 'id' satisfies keyof BufferLikeItem,
+        const objectStore = this.db.createObjectStore(this.tableName, {
+          keyPath: 'id' satisfies keyof BufferStorageIDBItem,
         });
+        objectStore.createIndex(
+          this.indexName,
+          'mediaId' satisfies keyof BufferStorageIDBItem,
+          { unique: false },
+        );
       } else {
         reject(new Error('Invalid target supplied'));
       }
@@ -97,7 +109,7 @@ export class IndexedDBStorage {
     this.clearOpenRequest();
   };
 
-  saveBlob(item: BufferLikeItem): Promise<void> {
+  saveBufferItem(item: BufferStorageIDBItem): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.db) {
         const store = this.db
@@ -145,10 +157,76 @@ export class IndexedDBStorage {
   onSaveError = (e: Event) => {
     if (this.saveRequest) {
       const { reject } = this.saveRequest;
-      if (e && e.target instanceof IDBOpenDBRequest) {
+      if (e && e.target instanceof IDBRequest) {
         reject(e.target.error);
       }
     }
     this.clearSaveRequest();
+  };
+
+  getAllByMediaIndex(
+    mediaId: BufferStorageIDBItem['mediaId'],
+  ): Promise<BufferStorageIDBItem[]> {
+    return new Promise((resolve, reject) => {
+      if (this.db) {
+        const idbIndexRequest = this.db
+          .transaction(this.tableName, 'readwrite')
+          .objectStore(this.tableName)
+          .index(this.indexName)
+          .openCursor(IDBKeyRange.only(mediaId));
+
+        this.indexRequest = {
+          response: [],
+          resolve,
+          reject,
+          request: idbIndexRequest,
+        };
+        this.listenIndexRequest();
+      } else {
+        reject(new Error('No database'));
+      }
+    });
+  }
+
+  listenIndexRequest() {
+    if (this.indexRequest) {
+      const { request } = this.indexRequest;
+      request.addEventListener('success', this.onIndexSuccess);
+      request.addEventListener('error', this.onIndexError);
+    }
+  }
+
+  clearIndexRequest() {
+    if (this.indexRequest) {
+      const { request } = this.indexRequest;
+      request.removeEventListener('success', this.onIndexSuccess);
+      request.removeEventListener('error', this.onIndexError);
+      this.indexRequest = null;
+    }
+  }
+
+  onIndexSuccess = (e: Event) => {
+    if (this.indexRequest) {
+      const { response, resolve } = this.indexRequest;
+      if (e && e.target instanceof IDBRequest) {
+        const cursor = e.target.result;
+        if (cursor instanceof IDBCursorWithValue) {
+          response.push(cursor.value);
+          return cursor.continue();
+        }
+        return resolve(response);
+      }
+    }
+    this.clearIndexRequest();
+  };
+
+  onIndexError = (e: Event) => {
+    if (this.indexRequest) {
+      const { reject } = this.indexRequest;
+      if (e && e.target instanceof IDBRequest) {
+        reject(e.target.error);
+      }
+    }
+    this.clearIndexRequest();
   };
 }

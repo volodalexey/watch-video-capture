@@ -46,9 +46,13 @@ export class MediaStorage {
     return result;
   }
 
-  addByMediaSource(mediaSource: MediaSource): MediaStorageItem {
+  addByMediaSource(
+    mediaSource: MediaSource,
+    callback: EventListener,
+  ): MediaStorageItem {
     const { item } = this.find({ mediaSource });
     if (!item) {
+      mediaSource.addEventListener('sourceended', callback);
       const newItem = createMediaItem({ mediaSource });
       this.store.push(newItem);
       return newItem;

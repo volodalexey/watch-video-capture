@@ -1,10 +1,17 @@
-import { type SourceBufferInfo } from '../MediaStorage';
-import { type BufferLikeItem } from './IndexedDBStorage.types';
+import { type MediaStorageItem, type SourceBufferInfo } from '../MediaStorage';
+import { type BufferStorageIDBItem } from './IndexedDBStorage.types';
 
 export function createBufferItem(
-  mediaId: string,
+  item: MediaStorageItem,
   sourceBufferInfo: SourceBufferInfo,
   buffer: ArrayBufferLike,
-): BufferLikeItem {
-  return { id: `${mediaId}-${sourceBufferInfo.counter++}`, buffer };
+): BufferStorageIDBItem {
+  const index = sourceBufferInfo.counter;
+  sourceBufferInfo.counter += 1;
+  return {
+    id: `${item.mediaIdHash}-${index}`,
+    mediaId: item.mediaId,
+    index,
+    buffer,
+  };
 }
