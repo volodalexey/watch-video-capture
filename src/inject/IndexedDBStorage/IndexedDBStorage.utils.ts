@@ -8,9 +8,13 @@ export function createBufferItem(
 ): BufferStorageIDBItem {
   const index = sourceBufferInfo.counter;
   sourceBufferInfo.counter += 1;
+  const { isVideo, isAudio, mimeType } = sourceBufferInfo;
   return {
-    id: `${item.mediaIdHash}-${index}`,
-    mediaId: item.mediaId,
+    id: `${item.mediaIdHash}-${isVideo ? 'v' : isAudio ? 'a' : '~'}-${index}`,
+    mediaIdHash: item.mediaIdHash,
+    mimeType,
+    isVideo,
+    isAudio,
     index,
     buffer,
   };

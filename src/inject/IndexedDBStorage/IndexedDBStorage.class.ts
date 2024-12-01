@@ -3,7 +3,7 @@ import { type BufferStorageIDBItem } from './IndexedDBStorage.types';
 export class IndexedDBStorage {
   dbName = 'watch-store';
   tableName = 'blobs';
-  indexName = 'mediaId';
+  indexName = 'IndexByMediaIdHash';
   version = 1;
 
   db: IDBDatabase | null = null;
@@ -99,7 +99,7 @@ export class IndexedDBStorage {
         });
         objectStore.createIndex(
           this.indexName,
-          'mediaId' satisfies keyof BufferStorageIDBItem,
+          'mediaIdHash' satisfies keyof BufferStorageIDBItem,
           { unique: false },
         );
       } else {
@@ -165,7 +165,7 @@ export class IndexedDBStorage {
   };
 
   getAllByMediaIndex(
-    mediaId: BufferStorageIDBItem['mediaId'],
+    mediaIdHash: BufferStorageIDBItem['mediaIdHash'],
   ): Promise<BufferStorageIDBItem[]> {
     return new Promise((resolve, reject) => {
       if (this.db) {
@@ -173,7 +173,7 @@ export class IndexedDBStorage {
           .transaction(this.tableName, 'readwrite')
           .objectStore(this.tableName)
           .index(this.indexName)
-          .openCursor(IDBKeyRange.only(mediaId));
+          .openCursor(IDBKeyRange.only(mediaIdHash));
 
         this.indexRequest = {
           response: [],

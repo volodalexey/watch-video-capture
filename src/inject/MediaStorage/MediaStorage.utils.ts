@@ -36,7 +36,10 @@ export function createSourceBufferInfo(
     isVideo: isVideoSourceBuffer(sourceBufferInfo.mimeType),
     isAudio: isAudioSourceBuffer(sourceBufferInfo.mimeType),
     counter: 0,
-    ...sourceBufferInfo,
+    mimeType: sourceBufferInfo.mimeType,
+    mimeTypeHash: hashCode(sourceBufferInfo.mimeType),
+    onUpdateEndMock: sourceBufferInfo.onUpdateEndMock,
+    onUpdateEndOriginal: sourceBufferInfo.onUpdateEndOriginal,
   };
 }
 

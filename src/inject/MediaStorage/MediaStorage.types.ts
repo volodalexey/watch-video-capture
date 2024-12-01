@@ -1,5 +1,6 @@
 export type SourceBufferInfo = {
   mimeType: string;
+  mimeTypeHash: string;
   isVideo: boolean;
   isAudio: boolean;
   counter: number;

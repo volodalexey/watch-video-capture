@@ -7,6 +7,7 @@ import {
   setHTMLVideoElement,
 } from './MediaStorage/MediaStorage.utils';
 import { createBufferItem } from './IndexedDBStorage/IndexedDBStorage.utils';
+import { getExtensionByMimeType } from '@/common/browser';
 
 function start() {
   const mediaStorage = new MediaStorage();
@@ -36,17 +37,27 @@ function start() {
     if (e.target instanceof MediaSource) {
       const { item } = mediaStorage.find({ mediaSource: e.target });
       if (item) {
-        indexedDbStorage.getAllByMediaIndex(item.mediaId).then((result) => {
-          result.sort((a, b) => a.index - b.index);
-          console.debug(result);
+        indexedDbStorage.getAllByMediaIndex(item.mediaIdHash).then((result) => {
+          const videoItems = result.filter((item) => item.isVideo);
+          videoItems.sort((a, b) => a.index - b.index);
+          const audioItems = result.filter((item) => item.isAudio);
+          audioItems.sort((a, b) => a.index - b.index);
           const a = document.createElement('a');
-          const contentType = 'application/octet-stream';
+          const detected = getExtensionByMimeType(videoItems[0].mimeType);
+          const contentType = detected
+            ? detected.mimeType
+            : 'application/octet-stream';
           const blob = new Blob(
-            result.map((r) => r.buffer),
+            [
+              ...videoItems.map((r) => r.buffer),
+              ...audioItems.map((r) => r.buffer),
+            ],
             { type: contentType },
           );
           a.href = window.URL.createObjectURL(blob);
-          // a.download = filename;
+          if (detected) {
+            a.download = `output.${detected.extension}`;
+          }
           a.click();
         });
       }
@@ -130,7 +141,7 @@ function start() {
       loggerBefore: (_, sourceBuffer, args) => {
         const { sourceBufferInfo, item } =
           mediaStorage.findSourceBufferInfo(sourceBuffer);
-        if (sourceBufferInfo && sourceBufferInfo.isVideo) {
+        if (sourceBufferInfo) {
           checkMediaId(item);
           if (args[0] instanceof Uint8Array) {
             indexedDbStorage.saveBufferItem(

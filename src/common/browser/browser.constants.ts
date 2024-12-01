@@ -1,0 +1,16 @@
+export const MimeTypeToExtension = {
+  'video/ogg': 'opus',
+  'video/mp4': 'mp4',
+  'video/x-matroska': 'mkv',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+  'audio/mp4': 'm4a',
+  'audio/m4a': 'm4a',
+  'audio/mpeg': 'mp3',
+  'audio/aac': 'aac',
+  'audio/x-caf': 'caf',
+  'audio/flac': 'flac',
+  'audio/ogg': 'ogg',
+  'audio/wav': 'wav',
+  'audio/opus': 'opus',
+};
