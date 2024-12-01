@@ -8,6 +8,7 @@ import {
 } from './MediaStorage/MediaStorage.utils';
 import { createBufferItem } from './IndexedDBStorage/IndexedDBStorage.utils';
 import { getExtensionByMimeType } from '@/common/browser';
+import { DownloadPopupItem, renderDownloadPopup } from './ui';
 
 function start() {
   const mediaStorage = new MediaStorage();
@@ -38,27 +39,57 @@ function start() {
       const { item } = mediaStorage.find({ mediaSource: e.target });
       if (item) {
         indexedDbStorage.getAllByMediaIndex(item.mediaIdHash).then((result) => {
-          const videoItems = result.filter((item) => item.isVideo);
-          videoItems.sort((a, b) => a.index - b.index);
-          const audioItems = result.filter((item) => item.isAudio);
-          audioItems.sort((a, b) => a.index - b.index);
-          const a = document.createElement('a');
-          const detected = getExtensionByMimeType(videoItems[0].mimeType);
-          const contentType = detected
-            ? detected.mimeType
-            : 'application/octet-stream';
-          const blob = new Blob(
-            [
-              ...videoItems.map((r) => r.buffer),
-              ...audioItems.map((r) => r.buffer),
-            ],
-            { type: contentType },
-          );
-          a.href = window.URL.createObjectURL(blob);
-          if (detected) {
-            a.download = `output.${detected.extension}`;
+          const videoSegments = result.filter((segment) => segment.isVideo);
+          const audioSegments = result.filter((segment) => segment.isAudio);
+
+          const downloadItems: DownloadPopupItem[] = [];
+          if (videoSegments.length) {
+            videoSegments.sort((a, b) => a.index - b.index);
+            const detected = getExtensionByMimeType(videoSegments[0].mimeType);
+            debugger;
+            const blob = new Blob(
+              videoSegments.map((r) => r.buffer),
+              { type: detected?.mimeType },
+            );
+            const href = window.URL.createObjectURL(blob);
+            downloadItems.push({
+              href,
+              fileName: detected.extension
+                ? `output.${detected.extension}`
+                : 'unknown_video',
+            });
           }
-          a.click();
+          if (audioSegments.length) {
+            audioSegments.sort((a, b) => a.index - b.index);
+            const detected = getExtensionByMimeType(audioSegments[0].mimeType);
+            const blob = new Blob(
+              audioSegments.map((r) => r.buffer),
+              { type: detected?.mimeType },
+            );
+            const href = window.URL.createObjectURL(blob);
+            downloadItems.push({
+              href,
+              fileName: detected.extension
+                ? `output.${detected.extension}`
+                : 'unknown_audio',
+            });
+          }
+
+          document.body.insertAdjacentHTML(
+            'afterbegin',
+            renderDownloadPopup(downloadItems),
+          );
+          const dialog = document.body.children[0] as HTMLDialogElement;
+          const closeButton = dialog.querySelector<HTMLButtonElement>('button');
+          dialog.showModal();
+          closeButton.addEventListener(
+            'click',
+            () => {
+              dialog.close();
+              dialog.remove();
+            },
+            { once: true },
+          );
         });
       }
     }
