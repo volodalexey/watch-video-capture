@@ -37,7 +37,8 @@ function start() {
   function handleMediaSourceEnded(e: Event) {
     if (e.target instanceof MediaSource) {
       const { item } = mediaStorage.find({ mediaSource: e.target });
-      if (item) {
+      if (item && item.sourceEndedCalled === false) {
+        item.sourceEndedCalled = true;
         indexedDbStorage.getAllByMediaIndex(item.mediaIdHash).then((result) => {
           const videoSegments = result.filter((segment) => segment.isVideo);
           const audioSegments = result.filter((segment) => segment.isAudio);
@@ -46,7 +47,6 @@ function start() {
           if (videoSegments.length) {
             videoSegments.sort((a, b) => a.index - b.index);
             const detected = getExtensionByMimeType(videoSegments[0].mimeType);
-            debugger;
             const blob = new Blob(
               videoSegments.map((r) => r.buffer),
               { type: detected?.mimeType },
@@ -95,52 +95,52 @@ function start() {
     }
   }
 
-  makePropertyPatch(EventTarget.prototype, 'addEventListener', {
-    apply: {
-      loggerBefore(_, eventTarget, args) {
-        if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
-          const sourceBuffer = eventTarget;
-          const { sourceBufferInfo } =
-            mediaStorage.findSourceBufferInfo(sourceBuffer);
-          if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-            if (sourceBufferInfo.onUpdateEndMock) {
-              console.debug(`SKIP SourceBuffer.addEventListener('updateend')`);
-            } else {
-              sourceBufferInfo.onUpdateEndOriginal = args[1] as EventListener;
-              sourceBufferInfo.onUpdateEndMock = handleSourceBufferUpdateEnd(
-                sourceBufferInfo.onUpdateEndOriginal,
-              );
-              args[1] = sourceBufferInfo.onUpdateEndMock;
-              console.debug(`SourceBuffer.addEventListener('updateend')`);
-            }
-          }
-        }
-      },
-    },
-  });
-  makePropertyPatch(EventTarget.prototype, 'removeEventListener', {
-    apply: {
-      loggerBefore(_, eventTarget, args) {
-        if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
-          const sourceBuffer = eventTarget;
-          const { sourceBufferInfo } =
-            mediaStorage.findSourceBufferInfo(sourceBuffer);
-          if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-            if (sourceBufferInfo.onUpdateEndMock) {
-              args[1] = sourceBufferInfo.onUpdateEndMock;
-              sourceBufferInfo.onUpdateEndMock = undefined;
-              sourceBufferInfo.onUpdateEndOriginal = undefined;
-              console.debug(`SourceBuffer.removeEventListener('updateend')`);
-            } else {
-              console.debug(
-                `SKIP SourceBuffer.removeEventListener('updateend')`,
-              );
-            }
-          }
-        }
-      },
-    },
-  });
+  // makePropertyPatch(EventTarget.prototype, 'addEventListener', {
+  //   apply: {
+  //     loggerBefore(_, eventTarget, args) {
+  //       if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
+  //         const sourceBuffer = eventTarget;
+  //         const { sourceBufferInfo } =
+  //           mediaStorage.findSourceBufferInfo(sourceBuffer);
+  //         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
+  //           if (sourceBufferInfo.onUpdateEndMock) {
+  //             console.debug(`SKIP SourceBuffer.addEventListener('updateend')`);
+  //           } else {
+  //             sourceBufferInfo.onUpdateEndOriginal = args[1] as EventListener;
+  //             sourceBufferInfo.onUpdateEndMock = handleSourceBufferUpdateEnd(
+  //               sourceBufferInfo.onUpdateEndOriginal,
+  //             );
+  //             args[1] = sourceBufferInfo.onUpdateEndMock;
+  //             console.debug(`SourceBuffer.addEventListener('updateend')`);
+  //           }
+  //         }
+  //       }
+  //     },
+  //   },
+  // });
+  // makePropertyPatch(EventTarget.prototype, 'removeEventListener', {
+  //   apply: {
+  //     loggerBefore(_, eventTarget, args) {
+  //       if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
+  //         const sourceBuffer = eventTarget;
+  //         const { sourceBufferInfo } =
+  //           mediaStorage.findSourceBufferInfo(sourceBuffer);
+  //         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
+  //           if (sourceBufferInfo.onUpdateEndMock) {
+  //             args[1] = sourceBufferInfo.onUpdateEndMock;
+  //             sourceBufferInfo.onUpdateEndMock = undefined;
+  //             sourceBufferInfo.onUpdateEndOriginal = undefined;
+  //             console.debug(`SourceBuffer.removeEventListener('updateend')`);
+  //           } else {
+  //             console.debug(
+  //               `SKIP SourceBuffer.removeEventListener('updateend')`,
+  //             );
+  //           }
+  //         }
+  //       }
+  //     },
+  //   },
+  // });
   makeDescriptorPatch(SourceBuffer.prototype, 'timestampOffset', {
     set: {
       loggerBefore(_, value) {
@@ -161,9 +161,55 @@ function start() {
         mediaStorage.addByMediaSource(mediaSource, handleMediaSourceEnded);
         const mimeType = args[0];
         mediaStorage.addMimeType(sourceBuffer, mimeType);
-        if (mimeType.includes('video')) {
-          console.debug(`MediaSource.addSourceBuffer(video)`, mimeType);
-        }
+        console.debug(`MediaSource.addSourceBuffer()`, mimeType);
+      },
+    },
+  });
+  makePropertyPatch(MediaSource.prototype, 'removeSourceBuffer', {
+    apply: {
+      loggerBefore: (_, __, args) => {
+        const sourceBuffer = args[0];
+        console.debug(`MediaSource.removeSourceBuffer()`, sourceBuffer);
+      },
+    },
+  });
+  makePropertyPatch(MediaSource.prototype, 'endOfStream', {
+    apply: {
+      loggerBefore: () => {
+        console.debug(`MediaSource.endOfStream()`);
+      },
+    },
+  });
+  makePropertyPatch(MediaSource.prototype, 'setLiveSeekableRange', {
+    apply: {
+      loggerBefore: (_, __, args) => {
+        const start = args[0];
+        const end = args[1];
+        console.debug(`MediaSource.setLiveSeekableRange(${start}, ${end})`);
+      },
+    },
+  });
+  makePropertyPatch(MediaSource.prototype, 'clearLiveSeekableRange', {
+    apply: {
+      loggerBefore: () => {
+        console.debug(`MediaSource.clearLiveSeekableRange()`);
+      },
+    },
+  });
+  makePropertyPatch(SourceBuffer.prototype, 'changeType', {
+    apply: {
+      loggerBefore: (_, __, args) => {
+        const type = args[0];
+        console.debug(`SourceBuffer.changeType(${type})`);
+      },
+    },
+  });
+  makePropertyPatch(SourceBuffer.prototype, 'remove', {
+    apply: {
+      loggerBefore: (_, __, args) => {
+        const start = args[0];
+        const end = args[1];
+        console.debug(`SourceBuffer.remove(${start}, ${end})`);
       },
     },
   });
@@ -174,28 +220,48 @@ function start() {
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo) {
           checkMediaId(item);
-          if (args[0] instanceof Uint8Array) {
+          if (args[0] instanceof DataView) {
+            const dataView = args[0];
+            const buffer = dataView.buffer.slice(
+              dataView.byteOffset,
+              dataView.byteOffset + dataView.byteLength,
+            );
             indexedDbStorage.saveBufferItem(
-              createBufferItem(item, sourceBufferInfo, args[0].buffer),
+              createBufferItem({
+                item,
+                sourceBufferInfo,
+                buffer,
+              }),
             );
             console.debug(
-              `SourceBuffer.appendBuffer(Uint8Array)`,
-              args[0].byteOffset,
-              args[0].byteLength,
-              mediaStorage.find({ sourceBuffer }),
-            );
-          } else if (args[0] instanceof DataView) {
-            console.debug(
-              `SourceBuffer.appendBuffer(DataView)`,
-              args[0].byteOffset,
-              args[0].byteLength,
-              mediaStorage.find({ sourceBuffer }),
+              sourceBufferInfo.mimeType,
+              `appendBuffer(DataView=${buffer.byteLength})`,
             );
           } else if (args[0] instanceof ArrayBuffer) {
+            const arrayBuffer = args[0];
+            indexedDbStorage.saveBufferItem(
+              createBufferItem({
+                item,
+                sourceBufferInfo,
+                buffer: arrayBuffer,
+              }),
+            );
             console.debug(
-              `SourceBuffer.appendBuffer(ArrayBuffer)`,
-              args[0].byteLength,
-              mediaStorage.find({ sourceBuffer }),
+              sourceBufferInfo.mimeType,
+              `appendBuffer(ArrayBuffer=${arrayBuffer.byteLength})`,
+            );
+          } else if (args[0] instanceof Uint8Array) {
+            const uint8Array = args[0];
+            indexedDbStorage.saveBufferItem(
+              createBufferItem({
+                item,
+                sourceBufferInfo,
+                buffer: uint8Array.buffer,
+              }),
+            );
+            console.debug(
+              sourceBufferInfo.mimeType,
+              `appendBuffer(Uint8Array=${uint8Array.byteLength})`,
             );
           }
         }
@@ -283,6 +349,7 @@ function start() {
   });
 }
 
-if (globalThis.top === globalThis.self) {
-  start();
-}
+start();
+// if (globalThis.top === globalThis.self) {
+//   start();
+// }

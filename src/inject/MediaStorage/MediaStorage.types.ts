@@ -16,9 +16,13 @@ export type MediaStorageItem = {
   htmlVideoElement?: HTMLVideoElement;
   htmlSourceElement?: HTMLSourceElement;
   info: Map<SourceBuffer, SourceBufferInfo>;
+  sourceEndedCalled: boolean;
 };
 
-export type PartialMediaStorageItem = Omit<MediaStorageItem, 'info'>;
+export type PartialMediaStorageItem = Omit<
+  MediaStorageItem,
+  'info' | 'sourceEndedCalled'
+>;
 
 export type SearchByParams = PartialMediaStorageItem & {
   sourceBuffer?: SourceBuffer;

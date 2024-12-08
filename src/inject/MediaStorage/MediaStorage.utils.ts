@@ -9,7 +9,7 @@ import {
 export function createMediaItem(
   partial: PartialMediaStorageItem = {},
 ): MediaStorageItem {
-  return { info: new Map(), ...partial };
+  return { info: new Map(), sourceEndedCalled: false, ...partial };
 }
 
 export function setHTMLVideoElement(
