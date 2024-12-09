@@ -8,7 +8,11 @@ import {
 } from './MediaStorage/MediaStorage.utils';
 import { createBufferItem } from './IndexedDBStorage/IndexedDBStorage.utils';
 import { getExtensionByMimeType } from '@/common/browser';
-import { DownloadPopupItem, renderDownloadPopup } from './ui';
+import {
+  DownloadPopupItem,
+  renderDownloadPopup,
+  showDownloadPopup,
+} from './ui';
 
 function start() {
   const mediaStorage = new MediaStorage();
@@ -37,110 +41,12 @@ function start() {
   function handleMediaSourceEnded(e: Event) {
     if (e.target instanceof MediaSource) {
       const { item } = mediaStorage.find({ mediaSource: e.target });
-      if (item && item.sourceEndedCalled === false) {
-        item.sourceEndedCalled = true;
-        indexedDbStorage.getAllByMediaIndex(item.mediaIdHash).then((result) => {
-          const videoSegments = result.filter((segment) => segment.isVideo);
-          const audioSegments = result.filter((segment) => segment.isAudio);
-
-          const downloadItems: DownloadPopupItem[] = [];
-          if (videoSegments.length) {
-            videoSegments.sort((a, b) => a.index - b.index);
-            const detected = getExtensionByMimeType(videoSegments[0].mimeType);
-            const blob = new Blob(
-              videoSegments.map((r) => r.buffer),
-              { type: detected?.mimeType },
-            );
-            const href = window.URL.createObjectURL(blob);
-            downloadItems.push({
-              href,
-              fileName: detected.extension
-                ? `output.${detected.extension}`
-                : 'unknown_video',
-            });
-          }
-          if (audioSegments.length) {
-            audioSegments.sort((a, b) => a.index - b.index);
-            const detected = getExtensionByMimeType(audioSegments[0].mimeType);
-            const blob = new Blob(
-              audioSegments.map((r) => r.buffer),
-              { type: detected?.mimeType },
-            );
-            const href = window.URL.createObjectURL(blob);
-            downloadItems.push({
-              href,
-              fileName: detected.extension
-                ? `output.${detected.extension}`
-                : 'unknown_audio',
-            });
-          }
-
-          document.body.insertAdjacentHTML(
-            'afterbegin',
-            renderDownloadPopup(downloadItems),
-          );
-          const dialog = document.body.children[0] as HTMLDialogElement;
-          const closeButton = dialog.querySelector<HTMLButtonElement>('button');
-          dialog.showModal();
-          closeButton.addEventListener(
-            'click',
-            () => {
-              dialog.close();
-              dialog.remove();
-            },
-            { once: true },
-          );
-        });
+      if (item) {
+        showDownloadPopup(indexedDbStorage, item);
       }
     }
   }
 
-  // makePropertyPatch(EventTarget.prototype, 'addEventListener', {
-  //   apply: {
-  //     loggerBefore(_, eventTarget, args) {
-  //       if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
-  //         const sourceBuffer = eventTarget;
-  //         const { sourceBufferInfo } =
-  //           mediaStorage.findSourceBufferInfo(sourceBuffer);
-  //         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-  //           if (sourceBufferInfo.onUpdateEndMock) {
-  //             console.debug(`SKIP SourceBuffer.addEventListener('updateend')`);
-  //           } else {
-  //             sourceBufferInfo.onUpdateEndOriginal = args[1] as EventListener;
-  //             sourceBufferInfo.onUpdateEndMock = handleSourceBufferUpdateEnd(
-  //               sourceBufferInfo.onUpdateEndOriginal,
-  //             );
-  //             args[1] = sourceBufferInfo.onUpdateEndMock;
-  //             console.debug(`SourceBuffer.addEventListener('updateend')`);
-  //           }
-  //         }
-  //       }
-  //     },
-  //   },
-  // });
-  // makePropertyPatch(EventTarget.prototype, 'removeEventListener', {
-  //   apply: {
-  //     loggerBefore(_, eventTarget, args) {
-  //       if (args[0] === 'updateend' && eventTarget instanceof SourceBuffer) {
-  //         const sourceBuffer = eventTarget;
-  //         const { sourceBufferInfo } =
-  //           mediaStorage.findSourceBufferInfo(sourceBuffer);
-  //         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-  //           if (sourceBufferInfo.onUpdateEndMock) {
-  //             args[1] = sourceBufferInfo.onUpdateEndMock;
-  //             sourceBufferInfo.onUpdateEndMock = undefined;
-  //             sourceBufferInfo.onUpdateEndOriginal = undefined;
-  //             console.debug(`SourceBuffer.removeEventListener('updateend')`);
-  //           } else {
-  //             console.debug(
-  //               `SKIP SourceBuffer.removeEventListener('updateend')`,
-  //             );
-  //           }
-  //         }
-  //       }
-  //     },
-  //   },
-  // });
   makeDescriptorPatch(SourceBuffer.prototype, 'timestampOffset', {
     set: {
       loggerBefore(_, value) {
@@ -206,10 +112,16 @@ function start() {
   });
   makePropertyPatch(SourceBuffer.prototype, 'remove', {
     apply: {
-      loggerBefore: (_, __, args) => {
-        const start = args[0];
-        const end = args[1];
-        console.debug(`SourceBuffer.remove(${start}, ${end})`);
+      loggerBefore: (_, sourceBuffer, args) => {
+        const { sourceBufferInfo } =
+          mediaStorage.findSourceBufferInfo(sourceBuffer);
+        if (sourceBufferInfo) {
+          const start = args[0];
+          const end = args[1];
+          console.debug(
+            `${sourceBufferInfo.mimeType} SourceBuffer.remove(${start}, ${end})`,
+          );
+        }
       },
     },
   });
@@ -219,23 +131,23 @@ function start() {
         const { sourceBufferInfo, item } =
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo) {
+          console.debug(
+            `${sourceBufferInfo.mimeType} SourceBuffer.appendBuffer()`,
+          );
           checkMediaId(item);
-          if (args[0] instanceof DataView) {
-            const dataView = args[0];
-            const buffer = dataView.buffer.slice(
-              dataView.byteOffset,
-              dataView.byteOffset + dataView.byteLength,
+          if (ArrayBuffer.isView(args[0])) {
+            const typedArray = args[0];
+            const buffer = typedArray.buffer.slice(
+              typedArray.byteOffset,
+              typedArray.byteOffset + typedArray.byteLength,
             );
             indexedDbStorage.saveBufferItem(
               createBufferItem({
                 item,
                 sourceBufferInfo,
                 buffer,
+                byteOffset: typedArray.byteOffset,
               }),
-            );
-            console.debug(
-              sourceBufferInfo.mimeType,
-              `appendBuffer(DataView=${buffer.byteLength})`,
             );
           } else if (args[0] instanceof ArrayBuffer) {
             const arrayBuffer = args[0];
@@ -245,23 +157,6 @@ function start() {
                 sourceBufferInfo,
                 buffer: arrayBuffer,
               }),
-            );
-            console.debug(
-              sourceBufferInfo.mimeType,
-              `appendBuffer(ArrayBuffer=${arrayBuffer.byteLength})`,
-            );
-          } else if (args[0] instanceof Uint8Array) {
-            const uint8Array = args[0];
-            indexedDbStorage.saveBufferItem(
-              createBufferItem({
-                item,
-                sourceBufferInfo,
-                buffer: uint8Array.buffer,
-              }),
-            );
-            console.debug(
-              sourceBufferInfo.mimeType,
-              `appendBuffer(Uint8Array=${uint8Array.byteLength})`,
             );
           }
         }

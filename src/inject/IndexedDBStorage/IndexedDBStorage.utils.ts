@@ -5,25 +5,37 @@ export function createBufferItem({
   item,
   sourceBufferInfo,
   buffer,
-  index,
+  byteOffset,
 }: {
   item: MediaStorageItem;
   sourceBufferInfo: SourceBufferInfo;
   buffer: ArrayBufferLike;
-  index?: number;
+  byteOffset?: number;
 }): BufferStorageIDBItem {
-  if (!Number.isFinite(index)) {
-    index = sourceBufferInfo.counter;
-    sourceBufferInfo.counter += 1;
+  let incremented = false;
+  let incrementedBy0 = false;
+  let incrementalByteOffset = 0;
+  if (!Number.isFinite(byteOffset)) {
+    incrementalByteOffset = sourceBufferInfo.incrementalByteOffset;
+    sourceBufferInfo.incrementalByteOffset += buffer.byteLength;
+    incremented = true;
+  } else if (byteOffset === 0) {
+    incrementalByteOffset = sourceBufferInfo.incrementalByteOffset;
+    sourceBufferInfo.incrementalByteOffset += buffer.byteLength;
+    incrementedBy0 = true;
+  } else {
+    incrementalByteOffset = byteOffset;
   }
   const { isVideo, isAudio, mimeType } = sourceBufferInfo;
+  const id = `${item.mediaIdHash}-${isVideo ? 'v' : isAudio ? 'a' : '~'}-${incremented ? 'I' : incrementedBy0 ? '0' : 'X'}-${incrementalByteOffset}=>${buffer.byteLength}`;
+  console.debug(`createBufferItem(${id})`);
   return {
-    id: `${item.mediaIdHash}-${isVideo ? 'v' : isAudio ? 'a' : '~'}-${index}`,
+    id,
     mediaIdHash: item.mediaIdHash,
     mimeType,
     isVideo,
     isAudio,
-    index,
+    incrementalByteOffset,
     buffer,
   };
 }

@@ -170,7 +170,7 @@ export class IndexedDBStorage {
     return new Promise((resolve, reject) => {
       if (this.db) {
         const idbIndexRequest = this.db
-          .transaction(this.tableName, 'readwrite')
+          .transaction(this.tableName, 'readonly')
           .objectStore(this.tableName)
           .index(this.indexName)
           .openCursor(IDBKeyRange.only(mediaIdHash));

@@ -35,7 +35,7 @@ export function createSourceBufferInfo(
   return {
     isVideo: isVideoSourceBuffer(sourceBufferInfo.mimeType),
     isAudio: isAudioSourceBuffer(sourceBufferInfo.mimeType),
-    counter: 0,
+    incrementalByteOffset: 0,
     mimeType: sourceBufferInfo.mimeType,
     mimeTypeHash: hashCode(sourceBufferInfo.mimeType),
     onUpdateEndMock: sourceBufferInfo.onUpdateEndMock,
