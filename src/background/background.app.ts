@@ -1,10 +1,11 @@
-import { mockBrowser } from '../common/browser';
-import { isContentMessage } from '../common/message';
+import { logBackgroundApp } from '@/common/logger';
+import { mockBrowser } from '@/common/browser';
+import { isContentMessage } from '@/common/message';
 
 mockBrowser();
 
 browser.runtime.onInstalled.addListener(() => {
-  console.debug('browser.runtime.onInstalled');
+  logBackgroundApp('browser.runtime.onInstalled');
 });
 
 browser.runtime.onMessage.addListener((e: unknown) => {
@@ -12,7 +13,7 @@ browser.runtime.onMessage.addListener((e: unknown) => {
     switch (e.type) {
       case 'buffer': {
         const received = new Uint8Array(e.payload.buffer);
-        // console.debug(received);
+        // logBackgroundApp(received);
       }
     }
   }

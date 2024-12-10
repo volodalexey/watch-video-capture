@@ -121,11 +121,6 @@ export function makePropertyPatch<
     objectIn[objectInProperty] = new Proxy(
       objectIn[objectInProperty] as object,
       {
-        // construct(Target, args) {
-        //   console.debug(`patch constructor new ${String(method)}`);
-        //   const newTarget = new Target(...args);
-        //   return newTarget;
-        // },
         apply: applyPatch
           ? (target, thisArgument, argumentsList) => {
               applyLoggerBefore?.(

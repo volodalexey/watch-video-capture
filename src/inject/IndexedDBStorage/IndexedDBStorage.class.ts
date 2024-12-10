@@ -1,3 +1,10 @@
+import {
+  logInjectIDBBufferItemCursor,
+  logInjectIDBBufferItemObjectStore,
+  logInjectIDBBufferItemRequest,
+  logInjectIDBBufferItemSave,
+  logInjectIDBBufferItemTransaction,
+} from '@/common/logger';
 import { type BufferStorageIDBItem } from './IndexedDBStorage.types';
 
 export class IndexedDBStorage {
@@ -12,15 +19,20 @@ export class IndexedDBStorage {
     reject: (e: Error) => unknown;
     request: IDBOpenDBRequest;
   } | null = null;
-  saveRequest: {
+  saveWorkflow: {
     resolve: () => unknown;
     reject: (e: Error) => unknown;
-    request: IDBRequest<IDBValidKey>;
+    transaction: IDBTransaction;
+    objectStore: IDBObjectStore;
+    request: IDBRequest<IDBCursorWithValue | null>;
+    saveItem: BufferStorageIDBItem;
   } | null = null;
-  indexRequest: {
+  getWorkflow: {
     response: BufferStorageIDBItem[];
     resolve: (items: BufferStorageIDBItem[]) => unknown;
     reject: (e: Error) => unknown;
+    transaction: IDBTransaction;
+    objectStore: IDBObjectStore;
     request: IDBRequest<IDBCursor>;
   } | null = null;
 
@@ -110,16 +122,31 @@ export class IndexedDBStorage {
   };
 
   saveBufferItem(item: BufferStorageIDBItem): Promise<void> {
+    logInjectIDBBufferItemSave(`saveBufferItem(%s)`, item.id);
     return new Promise((resolve, reject) => {
       if (this.db) {
-        const store = this.db
-          .transaction(this.tableName, 'readwrite')
-          .objectStore(this.tableName);
-        this.saveRequest = {
+        const idbIndexTransaction = this.db.transaction(
+          this.tableName,
+          'readwrite',
+        );
+
+        const idbIndexObjectStore = idbIndexTransaction.objectStore(
+          this.tableName,
+        );
+
+        const idbIndexRequest = idbIndexObjectStore
+          .index(this.indexName)
+          .openCursor(IDBKeyRange.only(item.mediaIdHash));
+
+        this.saveWorkflow = {
           resolve,
           reject,
-          request: store.put(item),
+          transaction: idbIndexTransaction,
+          objectStore: idbIndexObjectStore,
+          request: idbIndexRequest,
+          saveItem: item,
         };
+        this.listenSaveWorkflow();
         this.listenSaveRequest();
       } else {
         reject(new Error('No database'));
@@ -127,40 +154,182 @@ export class IndexedDBStorage {
     });
   }
 
-  listenSaveRequest() {
-    if (this.saveRequest) {
-      const { request } = this.saveRequest;
-      request.addEventListener('success', this.onSaveSuccess);
-      request.addEventListener('error', this.onSaveError);
+  listenSaveWorkflow() {
+    logInjectIDBBufferItemTransaction(
+      'listenSaveWorkflow() %s',
+      this.saveWorkflow,
+    );
+    if (this.saveWorkflow) {
+      const { transaction } = this.saveWorkflow;
+      transaction.addEventListener('success', this.onSaveWorkflowSuccess);
+      transaction.addEventListener('error', this.onSaveWorkflowError);
     }
   }
 
-  clearSaveRequest() {
-    if (this.saveRequest) {
-      const { request } = this.saveRequest;
-      request.removeEventListener('success', this.onSaveSuccess);
-      request.removeEventListener('error', this.onSaveError);
-      this.saveRequest = null;
+  clearSaveWorkflow() {
+    logInjectIDBBufferItemTransaction(
+      'clearSaveWorkflow() %s',
+      this.saveWorkflow,
+    );
+    if (this.saveWorkflow) {
+      const { transaction } = this.saveWorkflow;
+      transaction.removeEventListener('success', this.onSaveWorkflowSuccess);
+      transaction.removeEventListener('error', this.onSaveWorkflowError);
+      this.saveWorkflow = null;
     }
   }
 
-  onSaveSuccess = (e: Event) => {
-    if (this.saveRequest) {
-      if (e && e.target instanceof IDBRequest) {
-        const { resolve } = this.saveRequest;
-        resolve();
-      }
+  onSaveWorkflowSuccess = (e: Event) => {
+    logInjectIDBBufferItemTransaction(
+      'onSaveWorkflowSuccess() %s',
+      this.saveWorkflow,
+    );
+    if (this.saveWorkflow) {
+      const { resolve } = this.saveWorkflow;
+      resolve();
     }
-    this.clearSaveRequest();
+    this.clearSaveWorkflow();
   };
 
-  onSaveError = (e: Event) => {
-    if (this.saveRequest) {
-      const { reject } = this.saveRequest;
+  onSaveWorkflowError = (e: Event) => {
+    logInjectIDBBufferItemTransaction(
+      'onSaveWorkflowError() %s',
+      this.saveWorkflow,
+    );
+    if (this.saveWorkflow) {
+      const { reject } = this.saveWorkflow;
       if (e && e.target instanceof IDBRequest) {
         reject(e.target.error);
       }
     }
+    this.clearSaveWorkflow();
+  };
+
+  listenSaveRequest() {
+    logInjectIDBBufferItemRequest('listenSaveRequest() %s', this.saveWorkflow);
+    if (this.saveWorkflow) {
+      const { request } = this.saveWorkflow;
+      request.addEventListener('success', this.onSaveRequestSuccess);
+      request.addEventListener('error', this.onSaveRequestError);
+    }
+  }
+
+  clearSaveRequest() {
+    logInjectIDBBufferItemRequest('clearSaveRequest() %s', this.saveWorkflow);
+    if (this.saveWorkflow) {
+      const { request } = this.saveWorkflow;
+      request.removeEventListener('success', this.onSaveRequestSuccess);
+      request.removeEventListener('error', this.onSaveRequestError);
+    }
+  }
+
+  onSaveRequestSuccess = (e: Event) => {
+    logInjectIDBBufferItemRequest(
+      'onSaveRequestSuccess() %s',
+      this.saveWorkflow,
+    );
+    if (this.saveWorkflow) {
+      if (e && e.target instanceof IDBRequest) {
+        const { saveItem, objectStore } = this.saveWorkflow;
+        const cursor = e.target.result;
+        if (cursor instanceof IDBCursorWithValue) {
+          const cursorItem: BufferStorageIDBItem = cursor.value;
+          if (
+            cursorItem.incrementalByteOffset < saveItem.incrementalByteOffset &&
+            cursorItem.incrementalByteEnd > saveItem.incrementalByteOffset &&
+            saveItem.incrementalByteEnd > cursorItem.incrementalByteEnd
+          ) {
+            /*
+             |------------|
+             | cursorItem |
+             |------------|
+                     |------------|
+                     |  saveItem  |
+                     |------------|
+            */
+            /*
+             |---------------|
+             | newCursorItem | xxxxxxxxxx
+             |---------------|-------------
+                             |------------|
+                             |  saveItem  |
+                             |------------|
+            */
+            const newCursorBuffer = cursorItem.buffer.slice(
+              0,
+              saveItem.incrementalByteOffset - cursorItem.incrementalByteOffset,
+            );
+            logInjectIDBBufferItemCursor(
+              'newCursorBuffer left cursor.update()',
+            );
+            cursor.update({
+              ...cursorItem,
+              buffer: newCursorBuffer,
+            } as BufferStorageIDBItem);
+            return cursor.continue();
+          } else if (
+            cursorItem.incrementalByteOffset >=
+              saveItem.incrementalByteOffset &&
+            cursorItem.incrementalByteEnd <= saveItem.incrementalByteEnd
+          ) {
+            /*
+              |------------|
+              | cursorItem |
+              |------------|
+             |--------------|
+             |   saveItem   |
+             |--------------|
+            */
+            // TODO check if buffer array is the same
+            logInjectIDBBufferItemCursor('cursor.delete()');
+            cursor.delete();
+            return cursor.continue();
+          } else if (
+            cursorItem.incrementalByteOffset > saveItem.incrementalByteOffset &&
+            cursorItem.incrementalByteOffset < saveItem.incrementalByteEnd &&
+            cursorItem.incrementalByteEnd > saveItem.incrementalByteEnd
+          ) {
+            /*
+                 |------------|
+                 | cursorItem |
+                 |------------|
+             |------------|
+             |  saveItem  |
+             |------------|
+            */
+            /*
+                          |---------------|
+                xxxxxxxxxx| newCursorItem |
+             -------------|---------------|
+             |------------|
+             |  saveItem  |
+             |------------|
+            */
+            const newCursorBuffer = cursorItem.buffer.slice(
+              saveItem.incrementalByteEnd - cursorItem.incrementalByteOffset,
+            );
+            logInjectIDBBufferItemCursor(
+              'newCursorBuffer right cursor.update()',
+            );
+            cursor.update({
+              ...cursorItem,
+              buffer: newCursorBuffer,
+            } as BufferStorageIDBItem);
+            return cursor.continue();
+          }
+          logInjectIDBBufferItemCursor('cursor.continue()');
+          return cursor.continue();
+        } else {
+          logInjectIDBBufferItemObjectStore('objectStore.put(%s)', saveItem.id);
+          objectStore.put(saveItem);
+        }
+      }
+    }
+    this.clearSaveWorkflow();
+  };
+
+  onSaveRequestError = () => {
+    logInjectIDBBufferItemRequest('onSaveRequestError()');
     this.clearSaveRequest();
   };
 
@@ -169,64 +338,72 @@ export class IndexedDBStorage {
   ): Promise<BufferStorageIDBItem[]> {
     return new Promise((resolve, reject) => {
       if (this.db) {
-        const idbIndexRequest = this.db
-          .transaction(this.tableName, 'readonly')
-          .objectStore(this.tableName)
+        const idbIndexTransaction = this.db.transaction(
+          this.tableName,
+          'readonly',
+        );
+        const idbIndexObjectStore = idbIndexTransaction.objectStore(
+          this.tableName,
+        );
+        const idbIndexRequest = idbIndexObjectStore
           .index(this.indexName)
           .openCursor(IDBKeyRange.only(mediaIdHash));
 
-        this.indexRequest = {
+        this.getWorkflow = {
           response: [],
           resolve,
           reject,
+          transaction: idbIndexTransaction,
+          objectStore: idbIndexObjectStore,
           request: idbIndexRequest,
         };
-        this.listenIndexRequest();
+        this.listenGetIndexRequest();
       } else {
         reject(new Error('No database'));
       }
     });
   }
 
-  listenIndexRequest() {
-    if (this.indexRequest) {
-      const { request } = this.indexRequest;
-      request.addEventListener('success', this.onIndexSuccess);
-      request.addEventListener('error', this.onIndexError);
+  listenGetIndexRequest() {
+    if (this.getWorkflow) {
+      const { request } = this.getWorkflow;
+      request.addEventListener('success', this.onGetIndexSuccess);
+      request.addEventListener('error', this.onGetIndexError);
     }
   }
 
-  clearIndexRequest() {
-    if (this.indexRequest) {
-      const { request } = this.indexRequest;
-      request.removeEventListener('success', this.onIndexSuccess);
-      request.removeEventListener('error', this.onIndexError);
-      this.indexRequest = null;
+  clearGetIndexRequest() {
+    if (this.getWorkflow) {
+      const { request } = this.getWorkflow;
+      request.removeEventListener('success', this.onGetIndexSuccess);
+      request.removeEventListener('error', this.onGetIndexError);
+      this.getWorkflow = null;
     }
   }
 
-  onIndexSuccess = (e: Event) => {
-    if (this.indexRequest) {
-      const { response, resolve } = this.indexRequest;
+  onGetIndexSuccess = (e: Event) => {
+    if (this.getWorkflow) {
+      const { response, resolve } = this.getWorkflow;
       if (e && e.target instanceof IDBRequest) {
         const cursor = e.target.result;
         if (cursor instanceof IDBCursorWithValue) {
           response.push(cursor.value);
           return cursor.continue();
         }
+        this.clearGetIndexRequest();
         return resolve(response);
       }
     }
-    this.clearIndexRequest();
+    this.clearGetIndexRequest();
   };
 
-  onIndexError = (e: Event) => {
-    if (this.indexRequest) {
-      const { reject } = this.indexRequest;
+  onGetIndexError = (e: Event) => {
+    if (this.getWorkflow) {
+      const { reject } = this.getWorkflow;
       if (e && e.target instanceof IDBRequest) {
         reject(e.target.error);
       }
     }
-    this.clearIndexRequest();
+    this.clearGetIndexRequest();
   };
 }

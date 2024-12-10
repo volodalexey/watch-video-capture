@@ -1,14 +1,14 @@
-import { mockBrowser } from '../common/browser';
+import { logContentApp } from '@/common/logger';
+import { mockBrowser } from '@/common/browser';
 import {
   isInjectMessage,
   sendContentToBackgroundMessage,
-  TInjectBufferMessage,
 } from '../common/message';
 
 mockBrowser();
 
 async function start() {
-  console.debug(
+  logContentApp(
     '%c content.app start(%s)',
     'background: #eeeeee; color: #c00c00',
     globalThis.location.toString(),

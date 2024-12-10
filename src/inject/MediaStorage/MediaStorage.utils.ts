@@ -66,9 +66,24 @@ export function calcUniqueId(item: MediaStorageItem): string {
   return `${duration}${infos.join('')}`;
 }
 
+export function setItemMediaSourceUrl(item: MediaStorageItem, url: string) {
+  item.mediaSourceUrl = url;
+}
+
+export function setItemHtmlSourceUrl(
+  item: MediaStorageItem,
+  element: HTMLSourceElement,
+) {
+  item.htmlSourceElement = element;
+}
+
 export function checkMediaId(item: MediaStorageItem) {
   if (!item.mediaId) {
     item.mediaId = calcUniqueId(item);
     item.mediaIdHash = hashCode(item.mediaId);
   }
+}
+
+export function setMediaItemCalled(item: MediaStorageItem) {
+  item.sourceEndedCalled = true;
 }

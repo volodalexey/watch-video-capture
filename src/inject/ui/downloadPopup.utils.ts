@@ -1,5 +1,5 @@
 import { getExtensionByMimeType } from '@/common/browser';
-import { type BufferStorageIDBItem } from '../IndexedDBStorage/IndexedDBStorage.types';
+import { type BufferStorageIDBItem } from '../IndexedDBStorage';
 import { type DownloadPopupItem } from './downloadPopup.types';
 
 export function prepareDownloadPopupItems(

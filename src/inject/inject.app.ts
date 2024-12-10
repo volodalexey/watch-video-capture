@@ -1,24 +1,38 @@
 import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
-import { MediaStorage } from './MediaStorage';
-import { IndexedDBStorage } from './IndexedDBStorage';
 import {
+  MediaStorage,
   checkMediaId,
   setHTMLVideoElement,
-} from './MediaStorage/MediaStorage.utils';
-import { createBufferItem } from './IndexedDBStorage/IndexedDBStorage.utils';
-import { getExtensionByMimeType } from '@/common/browser';
+  setItemHtmlSourceUrl,
+  setItemMediaSourceUrl,
+} from './MediaStorage';
+import { IndexedDBStorage, createBufferItem } from './IndexedDBStorage';
 import {
-  DownloadPopupItem,
-  renderDownloadPopup,
-  showDownloadPopup,
-} from './ui';
+  logInjectApp,
+  logInjectSourceBufferTimestamp,
+  logInjectSourceBufferEvent,
+  logInjectMediaSourceDuration,
+  logInjectMediaSourceAppend,
+  logInjectMediaSourceRemove,
+  logInjectMediaSourceEnd,
+  logInjectMediaSourceRange,
+  logInjectSourceBufferChange,
+  logInjectSourceBufferRemove,
+  logInjectSourceBufferAppend,
+  logInjectUrlCreate,
+  logInjectHtmlSourceSrc,
+  logInjectHtmlVideoSrc,
+  logInjectHtmlMediaDuration,
+  logInjectHtmlVideoAppend,
+} from '@/common/logger';
+import { showDownloadPopup } from './ui';
 
 function start() {
   const mediaStorage = new MediaStorage();
   const indexedDbStorage = new IndexedDBStorage();
   indexedDbStorage.tryInit();
-  console.debug('%c inject.app start()', 'background: #eeeeee; color: #c00c00');
+  logInjectApp('%c inject.app start()', 'background: #eeeeee; color: #c00c00');
 
   function handleSourceBufferUpdateEnd(callback: EventListener) {
     return (e: Event) => {
@@ -27,7 +41,7 @@ function start() {
         const { item, sourceBufferInfo } =
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-          console.debug(
+          logInjectSourceBufferEvent(
             'handleSourceBufferUpdateEnd buffered=%s seekable=%s',
             printTimeRanges(item.htmlVideoElement.buffered),
             printTimeRanges(item.htmlVideoElement.seekable),
@@ -42,7 +56,7 @@ function start() {
     if (e.target instanceof MediaSource) {
       const { item } = mediaStorage.find({ mediaSource: e.target });
       if (item) {
-        showDownloadPopup(indexedDbStorage, item);
+        // showDownloadPopup(indexedDbStorage, item);
       }
     }
   }
@@ -50,14 +64,17 @@ function start() {
   makeDescriptorPatch(SourceBuffer.prototype, 'timestampOffset', {
     set: {
       loggerBefore(_, value) {
-        console.debug(`SourceBuffer.timestampOffset=%s`, value);
+        logInjectSourceBufferTimestamp(
+          `SourceBuffer.timestampOffset=%s`,
+          value,
+        );
       },
     },
   });
   makeDescriptorPatch(MediaSource.prototype, 'duration', {
     set: {
       loggerBefore(_, value) {
-        console.debug(`MediaSource.duration=%s`, value);
+        logInjectMediaSourceDuration(`MediaSource.duration=%s`, value);
       },
     },
   });
@@ -67,7 +84,7 @@ function start() {
         mediaStorage.addByMediaSource(mediaSource, handleMediaSourceEnded);
         const mimeType = args[0];
         mediaStorage.addMimeType(sourceBuffer, mimeType);
-        console.debug(`MediaSource.addSourceBuffer()`, mimeType);
+        logInjectMediaSourceAppend(`MediaSource.addSourceBuffer()`, mimeType);
       },
     },
   });
@@ -75,14 +92,17 @@ function start() {
     apply: {
       loggerBefore: (_, __, args) => {
         const sourceBuffer = args[0];
-        console.debug(`MediaSource.removeSourceBuffer()`, sourceBuffer);
+        logInjectMediaSourceRemove(
+          `MediaSource.removeSourceBuffer()`,
+          sourceBuffer,
+        );
       },
     },
   });
   makePropertyPatch(MediaSource.prototype, 'endOfStream', {
     apply: {
       loggerBefore: () => {
-        console.debug(`MediaSource.endOfStream()`);
+        logInjectMediaSourceEnd(`MediaSource.endOfStream()`);
       },
     },
   });
@@ -91,14 +111,16 @@ function start() {
       loggerBefore: (_, __, args) => {
         const start = args[0];
         const end = args[1];
-        console.debug(`MediaSource.setLiveSeekableRange(${start}, ${end})`);
+        logInjectMediaSourceRange(
+          `MediaSource.setLiveSeekableRange(${start}, ${end})`,
+        );
       },
     },
   });
   makePropertyPatch(MediaSource.prototype, 'clearLiveSeekableRange', {
     apply: {
       loggerBefore: () => {
-        console.debug(`MediaSource.clearLiveSeekableRange()`);
+        logInjectMediaSourceRange(`MediaSource.clearLiveSeekableRange()`);
       },
     },
   });
@@ -106,7 +128,7 @@ function start() {
     apply: {
       loggerBefore: (_, __, args) => {
         const type = args[0];
-        console.debug(`SourceBuffer.changeType(${type})`);
+        logInjectSourceBufferChange(`SourceBuffer.changeType(${type})`);
       },
     },
   });
@@ -118,7 +140,7 @@ function start() {
         if (sourceBufferInfo) {
           const start = args[0];
           const end = args[1];
-          console.debug(
+          logInjectSourceBufferRemove(
             `${sourceBufferInfo.mimeType} SourceBuffer.remove(${start}, ${end})`,
           );
         }
@@ -131,7 +153,7 @@ function start() {
         const { sourceBufferInfo, item } =
           mediaStorage.findSourceBufferInfo(sourceBuffer);
         if (sourceBufferInfo) {
-          console.debug(
+          logInjectSourceBufferAppend(
             `${sourceBufferInfo.mimeType} SourceBuffer.appendBuffer()`,
           );
           checkMediaId(item);
@@ -172,8 +194,8 @@ function start() {
             mediaSource,
             handleMediaSourceEnded,
           );
-          item.mediaSourceUrl = url;
-          console.debug(`URL.createObjectURL(mediaSource)`, item);
+          setItemMediaSourceUrl(item, url);
+          logInjectUrlCreate(`URL.createObjectURL(mediaSource)`, item);
         }
       },
     },
@@ -184,14 +206,14 @@ function start() {
         if (target instanceof HTMLSourceElement) {
           const { item } = mediaStorage.find({ mediaSourceUrl: value });
           if (item) {
-            item.htmlSourceElement = target;
+            setItemHtmlSourceUrl(item, target);
             if (
               target.parentElement &&
               target.parentElement instanceof HTMLVideoElement
             ) {
               setHTMLVideoElement(item, target.parentElement);
             }
-            console.debug(`HTMLSourceElement.src=%s`, value);
+            logInjectHtmlSourceSrc(`HTMLSourceElement.src=%s`, value);
           }
         }
       },
@@ -205,13 +227,13 @@ function start() {
           if (item) {
             if (target instanceof HTMLVideoElement) {
               setHTMLVideoElement(item, target);
-              console.debug(`HTMLVideoElement.src=%s`, value);
+              logInjectHtmlVideoSrc(`HTMLVideoElement.src=%s`, value);
             } else if (
               target.parentElement &&
               target.parentElement instanceof HTMLVideoElement
             ) {
               setHTMLVideoElement(item, target.parentElement);
-              console.debug(`[parent]HTMLVideoElement.src=%s`, value);
+              logInjectHtmlVideoSrc(`[parent]HTMLVideoElement.src=%s`, value);
             }
           }
         }
@@ -221,7 +243,7 @@ function start() {
   makeDescriptorPatch(HTMLMediaElement.prototype, 'duration', {
     set: {
       loggerBefore(_, value) {
-        console.debug(`HTMLMediaElement.duration=%s`, value);
+        logInjectHtmlMediaDuration(`HTMLMediaElement.duration=%s`, value);
       },
     },
   });
@@ -236,7 +258,9 @@ function start() {
           const { item } = mediaStorage.find({ htmlSourceElement: value });
           if (item) {
             setHTMLVideoElement(item, node);
-            console.debug(`HTMLVideoElement.appendChild(HTMLSourceElement)`);
+            logInjectHtmlVideoAppend(
+              `HTMLVideoElement.appendChild(HTMLSourceElement)`,
+            );
           }
         }
       },

@@ -1,5 +1,5 @@
 import { type IndexedDBStorage } from '../IndexedDBStorage';
-import { type MediaStorageItem } from '../MediaStorage';
+import { setMediaItemCalled, type MediaStorageItem } from '../MediaStorage';
 import { type DownloadPopupItem } from './downloadPopup.types';
 import { prepareDownloadPopupItems } from './downloadPopup.utils';
 
@@ -25,7 +25,8 @@ export function showDownloadPopup(
   if (item.sourceEndedCalled) {
     return;
   }
-  item.sourceEndedCalled = true;
+  setMediaItemCalled(item);
+
   indexedDbStorage.getAllByMediaIndex(item.mediaIdHash).then((result) => {
     const downloadPopupItems = prepareDownloadPopupItems(result);
 

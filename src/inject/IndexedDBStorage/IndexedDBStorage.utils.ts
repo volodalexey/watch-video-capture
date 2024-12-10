@@ -1,3 +1,4 @@
+import { logInjectIDBBufferItemCreate } from '@/common/logger';
 import { type MediaStorageItem, type SourceBufferInfo } from '../MediaStorage';
 import { type BufferStorageIDBItem } from './IndexedDBStorage.types';
 
@@ -27,8 +28,9 @@ export function createBufferItem({
     incrementalByteOffset = byteOffset;
   }
   const { isVideo, isAudio, mimeType } = sourceBufferInfo;
-  const id = `${item.mediaIdHash}-${isVideo ? 'v' : isAudio ? 'a' : '~'}-${incremented ? 'I' : incrementedBy0 ? '0' : 'X'}-${incrementalByteOffset}=>${buffer.byteLength}`;
-  console.debug(`createBufferItem(${id})`);
+  const incrementalByteEnd = incrementalByteOffset + buffer.byteLength;
+  const id = `${item.mediaIdHash}-${isVideo ? 'v' : isAudio ? 'a' : '~'}-${incremented ? 'I' : incrementedBy0 ? '0' : 'X'}-${incrementalByteOffset}+${buffer.byteLength}=>${incrementalByteEnd}`;
+  logInjectIDBBufferItemCreate(`createBufferItem(${id})`);
   return {
     id,
     mediaIdHash: item.mediaIdHash,
@@ -36,6 +38,7 @@ export function createBufferItem({
     isVideo,
     isAudio,
     incrementalByteOffset,
+    incrementalByteEnd,
     buffer,
   };
 }
