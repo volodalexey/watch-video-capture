@@ -123,6 +123,21 @@ export const logInjectIDBBufferItemTransaction = debug(
   intoInjectIDBBufferItem('transaction'),
   true,
 );
+export const logInjectIDBBufferItemTransactionGreen = debug(
+  intoInjectIDBBufferItem('transaction'),
+  true,
+  'green',
+);
+export const logInjectIDBBufferItemTransactionYellow = debug(
+  intoInjectIDBBufferItem('transaction'),
+  true,
+  'yellow_1',
+);
+export const logInjectIDBBufferItemTransactionRed = debug(
+  intoInjectIDBBufferItem('transaction'),
+  true,
+  'red',
+);
 export const logInjectIDBBufferItemObjectStore = debug(
   intoInjectIDBBufferItem('objectstore'),
   true,
@@ -130,6 +145,16 @@ export const logInjectIDBBufferItemObjectStore = debug(
 export const logInjectIDBBufferItemRequest = debug(
   intoInjectIDBBufferItem('request'),
   true,
+);
+export const logInjectIDBBufferItemRequestGreen = debug(
+  intoInjectIDBBufferItem('request'),
+  true,
+  'green',
+);
+export const logInjectIDBBufferItemRequestYellow = debug(
+  intoInjectIDBBufferItem('request'),
+  true,
+  'yellow_2',
 );
 export const logInjectIDBBufferItemCursor = debug(
   intoInjectIDBBufferItem('cursor'),
@@ -142,5 +167,14 @@ export const logInjectIDBBufferItemCreate = debug(
 export const logInjectIDBBufferItemSave = debug(
   intoInjectIDBBufferItem('save'),
   true,
-  'green',
+);
+export const logInjectIDBBufferItemSaveYellow = debug(
+  intoInjectIDBBufferItem('save'),
+  true,
+  'yellow_1',
+);
+export const logInjectIDBBufferItemSaveRed = debug(
+  intoInjectIDBBufferItem('save'),
+  true,
+  'red',
 );

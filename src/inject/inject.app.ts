@@ -7,7 +7,11 @@ import {
   setItemHtmlSourceUrl,
   setItemMediaSourceUrl,
 } from './MediaStorage';
-import { IndexedDBStorage, createBufferItem } from './IndexedDBStorage';
+import {
+  IndexedDBStorage,
+  createBufferItem,
+  saveBufferItem,
+} from './IndexedDBStorage';
 import {
   logInjectApp,
   logInjectSourceBufferTimestamp,
@@ -163,7 +167,8 @@ function start() {
               typedArray.byteOffset,
               typedArray.byteOffset + typedArray.byteLength,
             );
-            indexedDbStorage.saveBufferItem(
+            saveBufferItem(
+              indexedDbStorage,
               createBufferItem({
                 item,
                 sourceBufferInfo,
@@ -173,7 +178,8 @@ function start() {
             );
           } else if (args[0] instanceof ArrayBuffer) {
             const arrayBuffer = args[0];
-            indexedDbStorage.saveBufferItem(
+            saveBufferItem(
+              indexedDbStorage,
               createBufferItem({
                 item,
                 sourceBufferInfo,
