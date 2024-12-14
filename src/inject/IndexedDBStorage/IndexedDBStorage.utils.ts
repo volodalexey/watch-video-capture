@@ -1,10 +1,13 @@
 import {
   logInjectIDBBufferItemCreate,
   logInjectIDBBufferItemCursor,
+  logInjectIDBBufferItemCursorMagenta,
+  logInjectIDBBufferItemCursorRed,
+  logInjectIDBBufferItemCursorYellow,
   logInjectIDBBufferItemObjectStore,
   logInjectIDBBufferItemRequest,
-  logInjectIDBBufferItemRequestYellow,
   logInjectIDBBufferItemSave,
+  logInjectIDBBufferItemSaveMagenta,
   logInjectIDBBufferItemSaveYellow,
   logInjectIDBBufferItemTransaction,
   logInjectIDBBufferItemTransactionGreen,
@@ -24,29 +27,39 @@ export function createBufferItem({
   sourceBufferInfo,
   buffer,
   byteOffset,
+  isView,
 }: {
   item: MediaStorageItem;
   sourceBufferInfo: SourceBufferInfo;
   buffer: ArrayBufferLike;
   byteOffset?: number;
+  isView: boolean;
 }): BufferStorageIDBItem {
-  let incremented = false;
   let incrementedBy0 = false;
-  let incrementalByteOffset = 0;
-  if (!Number.isFinite(byteOffset)) {
-    incrementalByteOffset = sourceBufferInfo.incrementalByteOffset;
-    sourceBufferInfo.incrementalByteOffset += buffer.byteLength;
-    incremented = true;
-  } else if (byteOffset === 0) {
-    incrementalByteOffset = sourceBufferInfo.incrementalByteOffset;
-    sourceBufferInfo.incrementalByteOffset += buffer.byteLength;
-    incrementedBy0 = true;
+  let viewByteOffset = 0;
+  let viewByteEnd = 0;
+  let rawByteOffset = 0;
+  let rawByteEnd = 0;
+  if (isView) {
+    if (byteOffset === 0) {
+      viewByteOffset = sourceBufferInfo.viewByteOffset;
+      sourceBufferInfo.viewByteOffset += buffer.byteLength;
+      incrementedBy0 = true;
+    } else {
+      viewByteOffset = byteOffset;
+    }
+    viewByteEnd = viewByteOffset + buffer.byteLength;
   } else {
-    incrementalByteOffset = byteOffset;
+    rawByteOffset = sourceBufferInfo.rawByteOffset;
+    sourceBufferInfo.rawByteOffset += buffer.byteLength;
+    incrementedBy0 = true;
+    rawByteEnd = rawByteOffset + buffer.byteLength;
   }
   const { isVideo, isAudio, mimeType } = sourceBufferInfo;
-  const incrementalByteEnd = incrementalByteOffset + buffer.byteLength;
-  const id = `${item.mediaIdHash}-${isVideo ? 'v' : isAudio ? 'a' : '~'}-${incremented ? 'I' : incrementedBy0 ? '0' : 'X'}-${incrementalByteOffset}+${buffer.byteLength}=>${incrementalByteEnd}`;
+  const bufferPart = isView
+    ? `${viewByteOffset}+${buffer.byteLength}=>${viewByteEnd}`
+    : `${rawByteOffset}+${buffer.byteLength}=>${rawByteEnd}`;
+  const id = `${item.mediaIdHash}-${isVideo ? '📺' : isAudio ? '🎵' : '~'}-${isView ? '👁️' : '💾'}${incrementedBy0 ? '0️⃣' : '❎'}-${bufferPart}`;
   logInjectIDBBufferItemCreate(`createBufferItem(${id})`);
   return {
     id,
@@ -54,8 +67,11 @@ export function createBufferItem({
     mimeType,
     isVideo,
     isAudio,
-    incrementalByteOffset,
-    incrementalByteEnd,
+    isView,
+    viewByteOffset,
+    viewByteEnd,
+    rawByteOffset,
+    rawByteEnd,
     buffer,
   };
 }
@@ -78,7 +94,7 @@ export function saveBufferItem(
 
 function checkNextSaveBufferItem(storage: IndexedDBStorage) {
   const next = storage.saveWorkflowQueue.shift();
-  logInjectIDBBufferItemSaveYellow(`checkNextSaveBufferItem(%s)`, next);
+  logInjectIDBBufferItemSaveMagenta(`checkNextSaveBufferItem(%s)`, next);
   if (next) {
     runSaveBufferItem(storage, next.resolve, next.reject, next.saveItem);
   }
@@ -223,7 +239,7 @@ function clearSaveRequest(
 
 function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
   const { storage, saveWorkflow } = this;
-  logInjectIDBBufferItemRequestYellow(
+  logInjectIDBBufferItemRequest(
     'onSaveRequestSuccess() %s %s',
     storage,
     saveWorkflow,
@@ -233,10 +249,14 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
     const cursor = e.target.result;
     if (cursor instanceof IDBCursorWithValue) {
       const cursorItem: BufferStorageIDBItem = cursor.value;
+      const isTypeMatch =
+        cursorItem.isView === saveItem.isView &&
+        cursorItem.mimeType === saveItem.mimeType;
       if (
-        cursorItem.incrementalByteOffset < saveItem.incrementalByteOffset &&
-        cursorItem.incrementalByteEnd > saveItem.incrementalByteOffset &&
-        saveItem.incrementalByteEnd > cursorItem.incrementalByteEnd
+        isTypeMatch &&
+        cursorItem.viewByteOffset < saveItem.viewByteOffset &&
+        cursorItem.viewByteEnd > saveItem.viewByteOffset &&
+        saveItem.viewByteEnd > cursorItem.viewByteEnd
       ) {
         /*
          |------------|
@@ -256,18 +276,30 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
         */
         const newCursorBuffer = cursorItem.buffer.slice(
           0,
-          saveItem.incrementalByteOffset - cursorItem.incrementalByteOffset,
+          saveItem.viewByteOffset - cursorItem.viewByteOffset,
         );
-        logInjectIDBBufferItemCursor('newCursorBuffer left cursor.update()');
+        // debugger;
+        logInjectIDBBufferItemCursorYellow(
+          'newCursorBuffer left cursor.update()',
+        );
         cursor.update({
           ...cursorItem,
           buffer: newCursorBuffer,
         } as BufferStorageIDBItem);
         return cursor.continue();
       } else if (
-        cursorItem.incrementalByteOffset >= saveItem.incrementalByteOffset &&
-        cursorItem.incrementalByteEnd <= saveItem.incrementalByteEnd
+        isTypeMatch &&
+        cursorItem.viewByteOffset >= saveItem.viewByteOffset &&
+        cursorItem.viewByteEnd <= saveItem.viewByteEnd
       ) {
+        if (
+          cursorItem.viewByteOffset === saveItem.viewByteOffset &&
+          cursorItem.viewByteEnd === saveItem.viewByteEnd
+        ) {
+          // found the same item => skip iteration
+          logInjectIDBBufferItemCursorYellow('cursor skip');
+          return;
+        }
         /*
           |------------|
           | cursorItem |
@@ -277,13 +309,15 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
          |--------------|
         */
         // TODO check if buffer array is the same
-        logInjectIDBBufferItemCursor('cursor.delete()');
+        // debugger;
+        logInjectIDBBufferItemCursorRed('cursor.delete()');
         cursor.delete();
         return cursor.continue();
       } else if (
-        cursorItem.incrementalByteOffset > saveItem.incrementalByteOffset &&
-        cursorItem.incrementalByteOffset < saveItem.incrementalByteEnd &&
-        cursorItem.incrementalByteEnd > saveItem.incrementalByteEnd
+        isTypeMatch &&
+        cursorItem.viewByteOffset > saveItem.viewByteOffset &&
+        cursorItem.viewByteOffset < saveItem.viewByteEnd &&
+        cursorItem.viewByteEnd > saveItem.viewByteEnd
       ) {
         /*
              |------------|
@@ -302,9 +336,12 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
          |------------|
         */
         const newCursorBuffer = cursorItem.buffer.slice(
-          saveItem.incrementalByteEnd - cursorItem.incrementalByteOffset,
+          saveItem.viewByteEnd - cursorItem.viewByteOffset,
         );
-        logInjectIDBBufferItemCursor('newCursorBuffer right cursor.update()');
+        // debugger;
+        logInjectIDBBufferItemCursorMagenta(
+          'newCursorBuffer right cursor.update()',
+        );
         cursor.update({
           ...cursorItem,
           buffer: newCursorBuffer,
@@ -315,7 +352,7 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
       return cursor.continue();
     } else {
       logInjectIDBBufferItemObjectStore('objectStore.put(%s)', saveItem.id);
-      return objectStore.put(saveItem);
+      objectStore.put(saveItem);
     }
   }
   clearSaveRequest(storage, saveWorkflow);

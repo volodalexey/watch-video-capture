@@ -6,8 +6,11 @@ export type BufferStorageIDBItem = {
   mimeType: string;
   isVideo: boolean;
   isAudio: boolean;
-  incrementalByteOffset: number;
-  incrementalByteEnd: number;
+  isView: boolean;
+  viewByteOffset: number;
+  viewByteEnd: number;
+  rawByteOffset: number;
+  rawByteEnd: number;
   buffer: ArrayBufferLike;
 };
 

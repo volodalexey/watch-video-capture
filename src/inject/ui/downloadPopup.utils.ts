@@ -2,6 +2,19 @@ import { getExtensionByMimeType } from '@/common/browser';
 import { type BufferStorageIDBItem } from '../IndexedDBStorage';
 import { type DownloadPopupItem } from './downloadPopup.types';
 
+function sorter(a: BufferStorageIDBItem, b: BufferStorageIDBItem) {
+  const isARaw = !a.isView;
+  const isBRaw = !b.isView;
+  if (isARaw && isBRaw) {
+    return a.rawByteOffset - b.rawByteOffset;
+  } else if (isARaw && !isBRaw) {
+    return 1;
+  } else if (!isARaw && isBRaw) {
+    return -1;
+  }
+  return a.viewByteOffset - b.viewByteOffset;
+}
+
 export function prepareDownloadPopupItems(
   result: BufferStorageIDBItem[],
 ): DownloadPopupItem[] {
@@ -10,9 +23,7 @@ export function prepareDownloadPopupItems(
 
   const downloadPopupItems: DownloadPopupItem[] = [];
   if (videoSegments.length) {
-    videoSegments.sort(
-      (a, b) => a.incrementalByteOffset - b.incrementalByteOffset,
-    );
+    videoSegments.sort(sorter);
     const detected = getExtensionByMimeType(videoSegments[0].mimeType);
     const blob = new Blob(
       videoSegments.map((r) => r.buffer),
@@ -28,9 +39,7 @@ export function prepareDownloadPopupItems(
     });
   }
   if (audioSegments.length) {
-    audioSegments.sort(
-      (a, b) => a.incrementalByteOffset - b.incrementalByteOffset,
-    );
+    audioSegments.sort(sorter);
     const detected = getExtensionByMimeType(audioSegments[0].mimeType);
     const blob = new Blob(
       audioSegments.map((r) => r.buffer),

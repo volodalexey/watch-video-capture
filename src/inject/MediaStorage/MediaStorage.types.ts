@@ -3,7 +3,8 @@ export type SourceBufferInfo = {
   mimeTypeHash: string;
   isVideo: boolean;
   isAudio: boolean;
-  incrementalByteOffset: number;
+  viewByteOffset: number;
+  rawByteOffset: number;
   onUpdateEndMock?: EventListener;
   onUpdateEndOriginal?: EventListener;
 };

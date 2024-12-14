@@ -67,15 +67,14 @@ export const logInjectSourceBufferTimestamp = debug(
 );
 export const logInjectSourceBufferChange = debug(
   intoInjectSourceBuffer('change'),
-  true,
+  false,
 );
 export const logInjectSourceBufferRemove = debug(
   intoInjectSourceBuffer('remove'),
-  true,
+  false,
 );
 export const logInjectSourceBufferAppend = debug(
   intoInjectSourceBuffer('append'),
-  true,
 );
 
 function intoInjectMediaSource(logName: string): string {
@@ -121,60 +120,84 @@ function intoInjectIDBBufferItem(logName: string): string {
 
 export const logInjectIDBBufferItemTransaction = debug(
   intoInjectIDBBufferItem('transaction'),
-  true,
+  false,
 );
 export const logInjectIDBBufferItemTransactionGreen = debug(
   intoInjectIDBBufferItem('transaction'),
-  true,
+  false,
   'green',
 );
 export const logInjectIDBBufferItemTransactionYellow = debug(
   intoInjectIDBBufferItem('transaction'),
-  true,
+  false,
   'yellow_1',
 );
 export const logInjectIDBBufferItemTransactionRed = debug(
   intoInjectIDBBufferItem('transaction'),
-  true,
+  false,
   'red',
 );
 export const logInjectIDBBufferItemObjectStore = debug(
   intoInjectIDBBufferItem('objectstore'),
   true,
 );
+export const logInjectIDBBufferItemObjectStoreMagenta = debug(
+  intoInjectIDBBufferItem('objectstore'),
+  false,
+  'magenta',
+);
 export const logInjectIDBBufferItemRequest = debug(
   intoInjectIDBBufferItem('request'),
-  true,
+  false,
 );
 export const logInjectIDBBufferItemRequestGreen = debug(
   intoInjectIDBBufferItem('request'),
-  true,
+  false,
   'green',
 );
 export const logInjectIDBBufferItemRequestYellow = debug(
   intoInjectIDBBufferItem('request'),
-  true,
+  false,
   'yellow_2',
 );
 export const logInjectIDBBufferItemCursor = debug(
   intoInjectIDBBufferItem('cursor'),
   true,
 );
+export const logInjectIDBBufferItemCursorYellow = debug(
+  intoInjectIDBBufferItem('cursor'),
+  true,
+  'yellow_2',
+);
+export const logInjectIDBBufferItemCursorMagenta = debug(
+  intoInjectIDBBufferItem('cursor'),
+  true,
+  'magenta',
+);
+export const logInjectIDBBufferItemCursorRed = debug(
+  intoInjectIDBBufferItem('cursor'),
+  true,
+  'red',
+);
 export const logInjectIDBBufferItemCreate = debug(
   intoInjectIDBBufferItem('create'),
-  true,
+  false,
 );
 export const logInjectIDBBufferItemSave = debug(
   intoInjectIDBBufferItem('save'),
-  true,
 );
 export const logInjectIDBBufferItemSaveYellow = debug(
   intoInjectIDBBufferItem('save'),
-  true,
+  false,
   'yellow_1',
+);
+export const logInjectIDBBufferItemSaveMagenta = debug(
+  intoInjectIDBBufferItem('save'),
+  false,
+  'magenta',
 );
 export const logInjectIDBBufferItemSaveRed = debug(
   intoInjectIDBBufferItem('save'),
-  true,
+  false,
   'red',
 );

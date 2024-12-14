@@ -174,6 +174,7 @@ function start() {
                 sourceBufferInfo,
                 buffer,
                 byteOffset: typedArray.byteOffset,
+                isView: true,
               }),
             );
           } else if (args[0] instanceof ArrayBuffer) {
@@ -184,6 +185,7 @@ function start() {
                 item,
                 sourceBufferInfo,
                 buffer: arrayBuffer,
+                isView: false,
               }),
             );
           }
