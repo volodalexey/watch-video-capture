@@ -5,11 +5,12 @@ import {
   type PartialMediaStorageItem,
   type SourceBufferInfo,
 } from './MediaStorage.types';
+import { TSerializedMediaStorageItem } from '@/common/message';
 
 export function createMediaItem(
   partial: PartialMediaStorageItem = {},
 ): MediaStorageItem {
-  return { info: new Map(), sourceEndedCalled: false, ...partial };
+  return { info: new Map(), ...partial };
 }
 
 export function setHTMLVideoElement(
@@ -27,9 +28,10 @@ export function setHTMLVideoElement(
 
 export function createSourceBufferInfo(
   sourceBufferInfo: Partial<
-    Omit<SourceBufferInfo, 'mimeType' | 'isVideo' | 'isAudio'>
+    Omit<SourceBufferInfo, 'mimeType' | 'isVideo' | 'isAudio' | 'onUpdateEnd'>
   > & {
     mimeType: SourceBufferInfo['mimeType'];
+    onUpdateEnd: SourceBufferInfo['onUpdateEnd'];
   },
 ): SourceBufferInfo {
   return {
@@ -39,8 +41,7 @@ export function createSourceBufferInfo(
     rawByteOffset: 0,
     mimeType: sourceBufferInfo.mimeType,
     mimeTypeHash: hashCode(sourceBufferInfo.mimeType),
-    onUpdateEndMock: sourceBufferInfo.onUpdateEndMock,
-    onUpdateEndOriginal: sourceBufferInfo.onUpdateEndOriginal,
+    onUpdateEnd: sourceBufferInfo.onUpdateEnd,
   };
 }
 
@@ -85,6 +86,24 @@ export function checkMediaId(item: MediaStorageItem) {
   }
 }
 
-export function setMediaItemCalled(item: MediaStorageItem) {
-  item.sourceEndedCalled = true;
+function serializeTimeRanges(timeRanges: TimeRanges): Array<[number, number]> {
+  const serialized: Array<[number, number]> = [];
+  for (let i = 0; i < timeRanges.length; i++) {
+    const start = timeRanges.start(i);
+    const end = timeRanges.end(i);
+    serialized.push([start, end]);
+  }
+  return serialized;
+}
+
+export function serializeMediaStorageItem(
+  item: MediaStorageItem,
+): TSerializedMediaStorageItem {
+  return {
+    mediaId: item.mediaId,
+    mediaIdHash: item.mediaIdHash,
+    mediaSourceUrl: item.mediaSourceUrl,
+    buffered: serializeTimeRanges(item.htmlVideoElement.buffered),
+    seekable: serializeTimeRanges(item.htmlVideoElement.seekable),
+  };
 }

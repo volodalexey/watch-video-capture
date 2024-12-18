@@ -63,6 +63,7 @@ export class MediaStorage {
   addMimeType(
     sourceBuffer: SourceBuffer,
     mimeType: string,
+    onUpdateEnd: EventListener,
   ): ReturnType<MediaStorage['findSourceBufferInfo']> {
     const result = this.findSourceBufferInfo(sourceBuffer);
     const { item, sourceBufferInfo } = result;
@@ -70,10 +71,26 @@ export class MediaStorage {
       if (sourceBufferInfo) {
         console.warn('SourceBufferInfo already present');
       } else {
-        item.info.set(sourceBuffer, createSourceBufferInfo({ mimeType }));
+        sourceBuffer.addEventListener('updateend', onUpdateEnd);
+        item.info.set(
+          sourceBuffer,
+          createSourceBufferInfo({ mimeType, onUpdateEnd }),
+        );
       }
     }
     return result;
+  }
+
+  clearSourceBuffer(sourceBuffer: SourceBuffer) {
+    const result = this.findSourceBufferInfo(sourceBuffer);
+    const { item, sourceBufferInfo } = result;
+    if (sourceBufferInfo) {
+      sourceBuffer.removeEventListener(
+        'updateend',
+        sourceBufferInfo.onUpdateEnd,
+      );
+      item.info.delete(sourceBuffer);
+    }
   }
 
   assignToAny(

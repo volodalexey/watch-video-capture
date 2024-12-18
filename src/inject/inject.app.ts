@@ -1,8 +1,8 @@
-import { printTimeRanges } from './detect';
 import { makeDescriptorPatch, makePropertyPatch } from './patch';
 import {
   MediaStorage,
   checkMediaId,
+  serializeMediaStorageItem,
   setHTMLVideoElement,
   setItemHtmlSourceUrl,
   setItemMediaSourceUrl,
@@ -31,6 +31,7 @@ import {
   logInjectHtmlVideoAppend,
 } from '@/common/logger';
 import { showDownloadPopup } from './ui';
+import { sendInjectMessage } from '@/common/message';
 
 function start() {
   const mediaStorage = new MediaStorage();
@@ -38,22 +39,23 @@ function start() {
   indexedDbStorage.tryInit();
   logInjectApp('%c inject.app start()', 'background: #eeeeee; color: #c00c00');
 
-  function handleSourceBufferUpdateEnd(callback: EventListener) {
-    return (e: Event) => {
-      if (e.target instanceof SourceBuffer) {
-        const sourceBuffer = e.target;
-        const { item, sourceBufferInfo } =
-          mediaStorage.findSourceBufferInfo(sourceBuffer);
-        if (sourceBufferInfo && sourceBufferInfo.isVideo) {
-          logInjectSourceBufferEvent(
-            'handleSourceBufferUpdateEnd buffered=%s seekable=%s',
-            printTimeRanges(item.htmlVideoElement.buffered),
-            printTimeRanges(item.htmlVideoElement.seekable),
-          );
-        }
+  function handleSourceBufferUpdateEnd(e: Event) {
+    if (e.target instanceof SourceBuffer) {
+      const sourceBuffer = e.target;
+      const { item, sourceBufferInfo } =
+        mediaStorage.findSourceBufferInfo(sourceBuffer);
+      if (sourceBufferInfo) {
+        const serializedMediaStorageItem = serializeMediaStorageItem(item);
+        sendInjectMessage({
+          type: 'mediaStorageItem',
+          payload: serializedMediaStorageItem,
+        });
+        logInjectSourceBufferEvent(
+          'handleSourceBufferUpdateEnd(%s)',
+          sourceBufferInfo.mimeType,
+        );
       }
-      callback(e);
-    };
+    }
   }
 
   function handleMediaSourceEnded(e: Event) {
@@ -87,7 +89,11 @@ function start() {
       loggerAfter: (sourceBuffer, _, mediaSource, args) => {
         mediaStorage.addByMediaSource(mediaSource, handleMediaSourceEnded);
         const mimeType = args[0];
-        mediaStorage.addMimeType(sourceBuffer, mimeType);
+        mediaStorage.addMimeType(
+          sourceBuffer,
+          mimeType,
+          handleSourceBufferUpdateEnd,
+        );
         logInjectMediaSourceAppend(`MediaSource.addSourceBuffer()`, mimeType);
       },
     },
@@ -96,6 +102,7 @@ function start() {
     apply: {
       loggerBefore: (_, __, args) => {
         const sourceBuffer = args[0];
+        mediaStorage.clearSourceBuffer(sourceBuffer);
         logInjectMediaSourceRemove(
           `MediaSource.removeSourceBuffer()`,
           sourceBuffer,
@@ -145,7 +152,7 @@ function start() {
           const start = args[0];
           const end = args[1];
           logInjectSourceBufferRemove(
-            `${sourceBufferInfo.mimeType} SourceBuffer.remove(${start}, ${end})`,
+            `SourceBuffer(${sourceBufferInfo.mimeType}).remove(${start}, ${end})`,
           );
         }
       },

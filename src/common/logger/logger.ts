@@ -51,7 +51,7 @@ function intoInjectName(logName: string): string {
   return `${intoLogName('inject-')}${logName}`;
 }
 
-export const logBackgroundApp = debug(intoBackgroundName('app'));
+export const logBackgroundApp = debug(intoBackgroundName('app'), true);
 export const logContentApp = debug(intoContentName('app'));
 export const logInjectApp = debug(intoInjectName('app'));
 
@@ -61,6 +61,7 @@ function intoInjectSourceBuffer(logName: string): string {
 
 export const logInjectSourceBufferEvent = debug(
   intoInjectSourceBuffer('event'),
+  true,
 );
 export const logInjectSourceBufferTimestamp = debug(
   intoInjectSourceBuffer('timestamp'),

@@ -5,8 +5,7 @@ export type SourceBufferInfo = {
   isAudio: boolean;
   viewByteOffset: number;
   rawByteOffset: number;
-  onUpdateEndMock?: EventListener;
-  onUpdateEndOriginal?: EventListener;
+  onUpdateEnd?: EventListener;
 };
 
 export type MediaStorageItem = {
@@ -17,7 +16,6 @@ export type MediaStorageItem = {
   htmlVideoElement?: HTMLVideoElement;
   htmlSourceElement?: HTMLSourceElement;
   info: Map<SourceBuffer, SourceBufferInfo>;
-  sourceEndedCalled: boolean;
 };
 
 export type PartialMediaStorageItem = Omit<

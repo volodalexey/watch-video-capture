@@ -32,7 +32,11 @@ async function start() {
     'message',
     (e) => {
       if (isInjectMessage(e.data)) {
-        sendContentToBackgroundMessage(e.data);
+        switch (e.data.type) {
+          case 'mediaStorageItem':
+            sendContentToBackgroundMessage(e.data);
+            break;
+        }
       }
     },
     false,

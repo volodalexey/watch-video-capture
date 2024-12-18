@@ -1,16 +1,10 @@
-import { createRoot } from 'react-dom/client';
+import { MediaStorageListItems } from './components/MediaStorageListItems';
 import './styles.css';
-import { mockBrowser } from '../common/browser';
 
-mockBrowser();
-
-function App() {
-  return <>Popup</>;
+export function App() {
+  return (
+    <>
+      <MediaStorageListItems items={[]} />
+    </>
+  );
 }
-
-function start() {
-  const root = createRoot(document.getElementById('root') as HTMLElement);
-  root.render(<App />);
-}
-
-start();

@@ -5,22 +5,32 @@ export type TMessageSource =
   | 'inject'
   | 'content';
 
-type TBufferMessageType = 'buffer';
+type TMediaStorageItemMessageType = 'mediaStorageItem';
 
-export type TInjectMessage = TInjectBufferMessage;
+export type TInjectMessage = TInjectMediaStorageItemMessage;
 
-export type TInjectBufferMessage = {
+export type TSerializedMediaStorageItem = {
+  mediaId: string;
+  mediaIdHash: string;
+  mediaSourceUrl: string;
+  buffered: Array<[number, number]>;
+  seekable: Array<[number, number]>;
+};
+
+export type TInjectMediaStorageItemMessage = {
   source: 'inject';
-  type: TBufferMessageType;
-  payload: { buffer: Array<number> };
+  type: TMediaStorageItemMessageType;
+  payload: TSerializedMediaStorageItem;
 };
 
-export type TContentMessage = TContentBufferMessage;
+export type TContentMessage = TContentMediaStorageItemMessage;
 
-export type TContentBufferMessage = {
+export type TContentMediaStorageItemMessage = {
   source: 'content';
-  type: TBufferMessageType;
-  payload: { buffer: Array<number> };
+  type: TMediaStorageItemMessageType;
+  payload: TSerializedMediaStorageItem;
 };
 
-export type TMessage = TInjectBufferMessage | TContentBufferMessage;
+export type TMessage =
+  | TInjectMediaStorageItemMessage
+  | TContentMediaStorageItemMessage;
