@@ -51,9 +51,14 @@ function intoInjectName(logName: string): string {
   return `${intoLogName('inject-')}${logName}`;
 }
 
+function intoPopupName(logName: string): string {
+  return `${intoLogName('popup-')}${logName}`;
+}
+
 export const logBackgroundApp = debug(intoBackgroundName('app'), true);
 export const logContentApp = debug(intoContentName('app'));
 export const logInjectApp = debug(intoInjectName('app'));
+export const logPopupApp = debug(intoPopupName('app'));
 
 function intoInjectSourceBuffer(logName: string): string {
   return `${intoInjectName('source-buffer-')}${logName}`;
@@ -202,3 +207,4 @@ export const logInjectIDBBufferItemSaveRed = debug(
   false,
   'red',
 );
+export const logPopupQueryGet = debug(intoPopupName('query-get'), true);

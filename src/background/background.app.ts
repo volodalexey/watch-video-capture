@@ -1,7 +1,7 @@
 import { logBackgroundApp } from '@/common/logger';
 import { mockBrowser } from '@/common/browser';
 import { isContentMessage } from '@/common/message';
-import { setStorageItem } from '@/common/storage';
+import { saveMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem/saveMediaStorageItem';
 
 mockBrowser();
 
@@ -15,7 +15,7 @@ browser.runtime.onMessage.addListener((e: unknown) => {
       case 'mediaStorageItem': {
         const mediaStorageItem = e.payload;
         logBackgroundApp(mediaStorageItem);
-        setStorageItem(mediaStorageItem.mediaIdHash, mediaStorageItem);
+        saveMediaStorageItem(mediaStorageItem);
       }
     }
   }

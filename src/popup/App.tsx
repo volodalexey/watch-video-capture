@@ -1,10 +1,18 @@
-import { MediaStorageListItems } from './components/MediaStorageListItems';
+import { useExtensionStorage } from '@/common/extensionStorage/extensionStorage.hooks';
+import {
+  MediaStorageListItems,
+  useMediaStorageItems,
+} from './components/MediaStorageListItems';
 import './styles.css';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/common/query/queryClient';
 
 export function App() {
   return (
     <>
-      <MediaStorageListItems items={[]} />
+      <QueryClientProvider client={queryClient}>
+        <MediaStorageListItems />
+      </QueryClientProvider>
     </>
   );
 }
