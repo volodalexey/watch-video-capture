@@ -9,12 +9,15 @@ type TMediaStorageItemMessageType = 'mediaStorageItem';
 
 export type TInjectMessage = TInjectMediaStorageItemMessage;
 
+export type TSerializedTimeRanges = Array<[number, number]>;
+
 export type TSerializedMediaStorageItem = {
   mediaId: string;
   mediaIdHash: string;
   mediaSourceUrl: string;
-  buffered: Array<[number, number]>;
-  seekable: Array<[number, number]>;
+  duration: number;
+  buffered: TSerializedTimeRanges;
+  seekable: TSerializedTimeRanges;
 };
 
 export type TInjectMediaStorageItemMessage = {

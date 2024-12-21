@@ -103,6 +103,7 @@ export function serializeMediaStorageItem(
     mediaId: item.mediaId,
     mediaIdHash: item.mediaIdHash,
     mediaSourceUrl: item.mediaSourceUrl,
+    duration: item.htmlVideoElement.duration,
     buffered: serializeTimeRanges(item.htmlVideoElement.buffered),
     seekable: serializeTimeRanges(item.htmlVideoElement.seekable),
   };

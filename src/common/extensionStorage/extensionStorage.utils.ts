@@ -47,14 +47,44 @@ export function clearStorage(): Promise<void> {
   return browser.storage.local.clear();
 }
 
-export async function appendStorageItem(
+export async function appendOrUpdateStorageItem(
   key: string,
   value: unknown,
+  valueKey: string,
   defaultValue = [],
 ) {
   const storageItems = await getStorageItem(key, defaultValue);
   if (Array.isArray(storageItems)) {
-    storageItems.push(value);
+    const foundIndex = storageItems.findIndex(
+      (storageItem) => storageItem[valueKey] === value[valueKey],
+    );
+    if (foundIndex > -1) {
+      storageItems.splice(foundIndex, 1, value);
+    } else {
+      storageItems.push(value);
+    }
+    await setStorageItem(key, storageItems);
+  } else {
+    console.warn('Storage data is not an array');
+  }
+}
+
+export async function deleteStorageItem(
+  key: string,
+  value: unknown,
+  valueKey: string,
+  defaultValue = [],
+) {
+  const storageItems = await getStorageItem(key, defaultValue);
+  if (Array.isArray(storageItems)) {
+    const foundIndex = storageItems.findIndex(
+      (storageItem) => storageItem[valueKey] === value[valueKey],
+    );
+    if (foundIndex > -1) {
+      storageItems.splice(foundIndex, 1);
+    } else {
+      console.warn('Unable to find storage item');
+    }
     await setStorageItem(key, storageItems);
   } else {
     console.warn('Storage data is not an array');

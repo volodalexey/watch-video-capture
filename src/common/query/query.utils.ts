@@ -15,7 +15,7 @@ export function WithAbortCheck<
     signal?.addEventListener('abort', () => {
       aborted = true;
     });
-    // run as macrotask for all the same queryFn to be aborted
+    // run as microtask for all the same queryFn to be aborted
     // this prevents access to the storage multiple times
     await new Promise((resolve) => setTimeout(resolve));
     if (aborted) {

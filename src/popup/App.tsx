@@ -1,7 +1,7 @@
 import { useExtensionStorage } from '@/common/extensionStorage/extensionStorage.hooks';
 import {
   MediaStorageListItems,
-  useMediaStorageItems,
+  useGetMediaStorageItems,
 } from './components/MediaStorageListItems';
 import './styles.css';
 import { QueryClientProvider } from '@tanstack/react-query';

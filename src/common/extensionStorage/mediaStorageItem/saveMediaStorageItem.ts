@@ -1,9 +1,13 @@
 import { type TSerializedMediaStorageItem } from '@/common/message';
-import { appendStorageItem } from '../extensionStorage.utils';
-import { MediaStorageItemsKey } from '../mediaStorageItems/mediaStorageItems.constants';
+import { appendOrUpdateStorageItem } from '../extensionStorage.utils';
+import { MediaStorageItemsKey } from '../mediaStorageItems';
 
 export async function saveMediaStorageItem(
   mediaStorageItem: TSerializedMediaStorageItem,
 ) {
-  return appendStorageItem(MediaStorageItemsKey, mediaStorageItem);
+  return appendOrUpdateStorageItem(
+    MediaStorageItemsKey,
+    mediaStorageItem,
+    'mediaIdHash',
+  );
 }

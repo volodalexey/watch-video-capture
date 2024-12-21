@@ -1,9 +1,61 @@
 import { TSerializedMediaStorageItem } from '@/common/message';
+import { TimeRanges } from '../TimeRanges';
+import { useCallback, useRef, useState } from 'react';
+import { useDeleteMediaStorageItem } from '../MediaStorageListItems';
 
 export type MediaStorageListItemProps = {
   item: TSerializedMediaStorageItem;
 };
 
 export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
-  return <li>{item.mediaId}</li>;
+  const ref = useRef<HTMLDialogElement | null>(null);
+
+  const handleOpen = useCallback(() => {
+    ref?.current.show();
+  }, []);
+
+  const { handleDelete } = useDeleteMediaStorageItem();
+
+  const handleDeleteItem = useCallback(() => {
+    handleDelete(item);
+  }, [item, handleDelete]);
+
+  return (
+    <li>
+      <div>
+        <b>{item.mediaIdHash}</b>
+        <button type="button" onClick={handleOpen}>
+          💬
+        </button>
+        <dialog ref={ref}>
+          <ul>
+            <li>
+              <button type="button" onClick={handleDeleteItem}>
+                ✖️ delete
+              </button>
+            </li>
+          </ul>
+        </dialog>
+      </div>
+      <div>{item.mediaId}</div>
+      <div>
+        <i>{item.mediaSourceUrl}</i>
+      </div>
+      <hr />
+      <div>
+        <TimeRanges
+          text="Buffered:"
+          timeRanges={item.buffered}
+          duration={item.duration}
+        />
+      </div>
+      <div>
+        <TimeRanges
+          text="Seekable:"
+          timeRanges={item.seekable}
+          duration={item.duration}
+        />
+      </div>
+    </li>
+  );
 }
