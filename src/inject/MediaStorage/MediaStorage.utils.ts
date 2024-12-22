@@ -10,7 +10,7 @@ import { TSerializedMediaStorageItem } from '@/common/message';
 export function createMediaItem(
   partial: PartialMediaStorageItem = {},
 ): MediaStorageItem {
-  return { info: new Map(), ...partial };
+  return { info: new Map(), downloadPopupOpen: false, ...partial };
 }
 
 export function setHTMLVideoElement(
@@ -107,4 +107,8 @@ export function serializeMediaStorageItem(
     buffered: serializeTimeRanges(item.htmlVideoElement.buffered),
     seekable: serializeTimeRanges(item.htmlVideoElement.seekable),
   };
+}
+
+export function setDownloadPopupOpen(item: MediaStorageItem, open: boolean) {
+  item.downloadPopupOpen = open;
 }

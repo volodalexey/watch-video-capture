@@ -10,8 +10,7 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting",
-    "webNavigation"
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"

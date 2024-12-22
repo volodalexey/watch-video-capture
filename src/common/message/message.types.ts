@@ -26,14 +26,33 @@ export type TInjectMediaStorageItemMessage = {
   payload: TSerializedMediaStorageItem;
 };
 
-export type TContentMessage = TContentMediaStorageItemMessage;
-
 export type TContentMediaStorageItemMessage = {
   source: 'content';
   type: TMediaStorageItemMessageType;
   payload: TSerializedMediaStorageItem;
 };
 
+export type TContentDownloadMediaStorageItemMessage = {
+  source: 'content';
+  type: TDownloadMediaStorageItemMessageType;
+  payload: TSerializedMediaStorageItem['mediaIdHash'];
+};
+
+export type TContentMessage =
+  | TContentMediaStorageItemMessage
+  | TContentDownloadMediaStorageItemMessage;
+
+type TDownloadMediaStorageItemMessageType = 'downloadMediaStorageItem';
+
+export type TPopupMessage = TPopupDownloadMediaStorageItemMessage;
+
+export type TPopupDownloadMediaStorageItemMessage = {
+  source: 'popup';
+  type: TDownloadMediaStorageItemMessageType;
+  payload: TSerializedMediaStorageItem['mediaIdHash'];
+};
+
 export type TMessage =
   | TInjectMediaStorageItemMessage
-  | TContentMediaStorageItemMessage;
+  | TContentMediaStorageItemMessage
+  | TPopupDownloadMediaStorageItemMessage;

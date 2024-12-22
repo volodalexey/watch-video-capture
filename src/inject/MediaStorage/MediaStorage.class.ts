@@ -15,7 +15,11 @@ export class MediaStorage {
   } {
     const itemIndex = this.store.findIndex((curItem) => {
       let found = false;
-      if (item.mediaSource) {
+      if (item.mediaId) {
+        found = curItem.mediaId === item.mediaId;
+      } else if (item.mediaIdHash) {
+        found = curItem.mediaIdHash === item.mediaIdHash;
+      } else if (item.mediaSource) {
         found = curItem.mediaSource === item.mediaSource;
       } else if (!found && item.mediaSourceUrl) {
         found = curItem.mediaSourceUrl === item.mediaSourceUrl;
@@ -46,13 +50,9 @@ export class MediaStorage {
     return result;
   }
 
-  addByMediaSource(
-    mediaSource: MediaSource,
-    callback: EventListener,
-  ): MediaStorageItem {
+  addByMediaSource(mediaSource: MediaSource): MediaStorageItem {
     const { item } = this.find({ mediaSource });
     if (!item) {
-      mediaSource.addEventListener('sourceended', callback);
       const newItem = createMediaItem({ mediaSource });
       this.store.push(newItem);
       return newItem;

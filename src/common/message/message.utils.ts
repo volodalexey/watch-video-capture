@@ -1,5 +1,6 @@
 import { TargetOrigin } from './message.constants';
 import {
+  TPopupMessage,
   type TContentMessage,
   type TInjectMessage,
   type TMessage,
@@ -23,6 +24,12 @@ export function isContentMessage(message: unknown): message is TContentMessage {
   }
 }
 
+export function isPopupMessage(message: unknown): message is TPopupMessage {
+  if (isMessage(message)) {
+    return message.source === 'popup';
+  }
+}
+
 export function sendInjectMessage(message: Omit<TInjectMessage, 'source'>) {
   globalThis.postMessage(
     { ...message, source: 'inject' } as TInjectMessage,
@@ -37,4 +44,22 @@ export function sendContentToBackgroundMessage(
     ...message,
     source: 'content',
   } as TContentMessage);
+}
+
+export async function sendPopupToContentMessage(
+  message: Omit<TPopupMessage, 'source'>,
+) {
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  if (tabs.length) {
+    browser.tabs.sendMessage(tabs[0].id, {
+      ...message,
+      source: 'popup',
+    } as TPopupMessage);
+  }
+}
+
+export function sendContentToInjectMessage(
+  message: Omit<TContentMessage, 'source'>,
+) {
+  globalThis.postMessage({ ...message, source: 'content' } as TContentMessage);
 }

@@ -1,4 +1,7 @@
-import { TSerializedMediaStorageItem } from '@/common/message';
+import {
+  sendPopupToContentMessage,
+  TSerializedMediaStorageItem,
+} from '@/common/message';
 import { TimeRanges } from '../TimeRanges';
 import { useCallback, useRef, useState } from 'react';
 import { useDeleteMediaStorageItem } from '../MediaStorageListItems';
@@ -11,8 +14,19 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
   const ref = useRef<HTMLDialogElement | null>(null);
 
   const handleOpen = useCallback(() => {
-    ref?.current.show();
+    if (ref?.current.open) {
+      ref?.current.close();
+    } else {
+      ref?.current.show();
+    }
   }, []);
+
+  const handleDownload = useCallback(() => {
+    sendPopupToContentMessage({
+      type: 'downloadMediaStorageItem',
+      payload: item.mediaIdHash,
+    });
+  }, [item]);
 
   const { handleDelete } = useDeleteMediaStorageItem();
 
@@ -24,6 +38,9 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
     <li>
       <div>
         <b>{item.mediaIdHash}</b>
+        <button type="button" onClick={handleDownload}>
+          💾
+        </button>
         <button type="button" onClick={handleOpen}>
           💬
         </button>

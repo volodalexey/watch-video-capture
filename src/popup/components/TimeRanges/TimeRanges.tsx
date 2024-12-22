@@ -25,7 +25,6 @@ export function TimeRanges({ text, timeRanges, duration }: TimeRangesProps) {
         const end = durationRelation * timeRange[1];
         const diff = end - start;
         totalRange += timeRange[1] - timeRange[0];
-        console.debug('timeRange', timeRange[0], timeRange[1]);
         return { start, end, diff };
       });
     return { ranges, totalRange };

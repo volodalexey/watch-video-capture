@@ -16,11 +16,12 @@ export type MediaStorageItem = {
   htmlVideoElement?: HTMLVideoElement;
   htmlSourceElement?: HTMLSourceElement;
   info: Map<SourceBuffer, SourceBufferInfo>;
+  downloadPopupOpen: boolean;
 };
 
 export type PartialMediaStorageItem = Omit<
   MediaStorageItem,
-  'info' | 'sourceEndedCalled'
+  'info' | 'sourceEndedCalled' | 'downloadPopupOpen'
 >;
 
 export type SearchByParams = PartialMediaStorageItem & {

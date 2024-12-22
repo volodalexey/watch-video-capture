@@ -2,7 +2,9 @@ import { logContentApp } from '@/common/logger';
 import { mockBrowser } from '@/common/browser';
 import {
   isInjectMessage,
+  isPopupMessage,
   sendContentToBackgroundMessage,
+  sendContentToInjectMessage,
 } from '../common/message';
 
 mockBrowser();
@@ -41,6 +43,16 @@ async function start() {
     },
     false,
   );
+
+  browser.runtime.onMessage.addListener((message) => {
+    if (isPopupMessage(message)) {
+      switch (message.type) {
+        case 'downloadMediaStorageItem':
+          sendContentToInjectMessage(message);
+          break;
+      }
+    }
+  });
 }
 
 start();

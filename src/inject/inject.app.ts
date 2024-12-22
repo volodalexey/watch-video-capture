@@ -31,13 +31,31 @@ import {
   logInjectHtmlVideoAppend,
 } from '@/common/logger';
 import { showDownloadPopup } from './ui';
-import { sendInjectMessage } from '@/common/message';
+import { isContentMessage, sendInjectMessage } from '@/common/message';
 
 function start() {
   const mediaStorage = new MediaStorage();
   const indexedDbStorage = new IndexedDBStorage();
   indexedDbStorage.tryInit();
   logInjectApp('%c inject.app start()', 'background: #eeeeee; color: #c00c00');
+
+  globalThis.addEventListener(
+    'message',
+    (e) => {
+      if (isContentMessage(e.data)) {
+        switch (e.data.type) {
+          case 'downloadMediaStorageItem':
+            const mediaIdHash = e.data.payload;
+            const { item } = mediaStorage.find({ mediaIdHash });
+            if (item) {
+              showDownloadPopup(indexedDbStorage, item);
+            }
+            break;
+        }
+      }
+    },
+    false,
+  );
 
   function handleSourceBufferUpdateEnd(e: Event) {
     if (e.target instanceof SourceBuffer) {
@@ -54,15 +72,6 @@ function start() {
           'handleSourceBufferUpdateEnd(%s)',
           sourceBufferInfo.mimeType,
         );
-      }
-    }
-  }
-
-  function handleMediaSourceEnded(e: Event) {
-    if (e.target instanceof MediaSource) {
-      const { item } = mediaStorage.find({ mediaSource: e.target });
-      if (item) {
-        // showDownloadPopup(indexedDbStorage, item);
       }
     }
   }
@@ -87,7 +96,7 @@ function start() {
   makePropertyPatch(MediaSource.prototype, 'addSourceBuffer', {
     apply: {
       loggerAfter: (sourceBuffer, _, mediaSource, args) => {
-        mediaStorage.addByMediaSource(mediaSource, handleMediaSourceEnded);
+        mediaStorage.addByMediaSource(mediaSource);
         const mimeType = args[0];
         mediaStorage.addMimeType(
           sourceBuffer,
@@ -205,10 +214,7 @@ function start() {
       loggerAfter: (url, _, __, args) => {
         const mediaSource = args[0];
         if (mediaSource instanceof MediaSource) {
-          const item = mediaStorage.addByMediaSource(
-            mediaSource,
-            handleMediaSourceEnded,
-          );
+          const item = mediaStorage.addByMediaSource(mediaSource);
           setItemMediaSourceUrl(item, url);
           logInjectUrlCreate(`URL.createObjectURL(mediaSource)`, item);
         }

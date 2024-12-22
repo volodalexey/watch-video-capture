@@ -55,7 +55,7 @@ function intoPopupName(logName: string): string {
   return `${intoLogName('popup-')}${logName}`;
 }
 
-export const logBackgroundApp = debug(intoBackgroundName('app'), true);
+export const logBackgroundApp = debug(intoBackgroundName('app'));
 export const logContentApp = debug(intoContentName('app'));
 export const logInjectApp = debug(intoInjectName('app'));
 export const logPopupApp = debug(intoPopupName('app'));
@@ -207,4 +207,4 @@ export const logInjectIDBBufferItemSaveRed = debug(
   false,
   'red',
 );
-export const logPopupQueryGet = debug(intoPopupName('query-get'), true);
+export const logPopupQueryGet = debug(intoPopupName('query-get'));
