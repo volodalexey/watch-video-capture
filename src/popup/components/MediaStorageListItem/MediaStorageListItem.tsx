@@ -1,13 +1,11 @@
-import {
-  sendPopupToContentMessage,
-  TSerializedMediaStorageItem,
-} from '@/common/message';
+import { sendPopupToContentMessage } from '@/common/message';
 import { TimeRanges } from '../TimeRanges';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useDeleteMediaStorageItem } from '../MediaStorageListItems';
+import { type TExtensionMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
 
 export type MediaStorageListItemProps = {
-  item: TSerializedMediaStorageItem;
+  item: TExtensionMediaStorageItem;
 };
 
 export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
@@ -33,6 +31,14 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
   const handleDeleteItem = useCallback(() => {
     handleDelete(item);
   }, [item, handleDelete]);
+
+  const capturedDictionary = useMemo<Record<string, string[]>>(() => {
+    const capturedDictionary: Record<string, string[]> = {};
+    Object.getOwnPropertyNames(item.captured).forEach((key) => {
+      capturedDictionary[key] = item.captured[key].map((value) => value.id);
+    });
+    return capturedDictionary;
+  }, [item.captured]);
 
   return (
     <li>
@@ -72,6 +78,17 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
           timeRanges={item.seekable}
           duration={item.duration}
         />
+      </div>
+      <hr />
+      <div>
+        Captured:{' '}
+        {Object.entries(capturedDictionary).map(([key, value]) => {
+          return (
+            <div>
+              {key}: {value.length}
+            </div>
+          );
+        })}
       </div>
     </li>
   );

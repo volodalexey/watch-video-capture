@@ -1,3 +1,4 @@
+import { TSerializedBufferStorageIDBItem } from '@/common/message';
 import { type IndexedDBStorage } from './IndexedDBStorage.class';
 
 export type BufferStorageIDBItem = {
@@ -19,9 +20,14 @@ export type SaveWorkflowThis = {
   saveWorkflow: SaveWorkflow;
 };
 
+export type SaveWorkflowResponse = Record<
+  string,
+  TSerializedBufferStorageIDBItem[]
+>;
+
 export type SaveWorkflowQueueItem = {
   saveItem: BufferStorageIDBItem;
-  resolve: () => unknown;
+  resolve: (response: SaveWorkflowResponse) => unknown;
   reject: (e: Error) => unknown;
 };
 
@@ -29,6 +35,7 @@ export type SaveWorkflow = SaveWorkflowQueueItem & {
   transaction: IDBTransaction;
   objectStore: IDBObjectStore;
   request: IDBRequest<IDBCursorWithValue | null>;
+  response: SaveWorkflowResponse;
   onSaveWorkflowSuccessBinded: (this: SaveWorkflowThis, e: Event) => unknown;
   onSaveWorkflowErrorBinded: (this: SaveWorkflowThis, e: Event) => unknown;
   onSaveRequestSuccessBinded: (this: SaveWorkflowThis, e: Event) => unknown;

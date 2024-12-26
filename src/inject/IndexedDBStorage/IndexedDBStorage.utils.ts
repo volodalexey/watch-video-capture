@@ -19,8 +19,10 @@ import {
   type BufferStorageIDBItem,
   SaveWorkflowThis,
   SaveWorkflowQueueItem,
+  SaveWorkflowResponse,
 } from './IndexedDBStorage.types';
 import { type IndexedDBStorage } from './IndexedDBStorage.class';
+import { TSerializedBufferStorageIDBItem } from '@/common/message';
 
 export function createBufferItem({
   item,
@@ -79,9 +81,9 @@ export function createBufferItem({
 export function saveBufferItem(
   storage: IndexedDBStorage,
   item: BufferStorageIDBItem,
-): Promise<void> {
+): Promise<SaveWorkflowResponse> {
   logInjectIDBBufferItemSave(`saveBufferItem(%s)`, item.id);
-  return new Promise((resolve, reject) => {
+  return new Promise<SaveWorkflowResponse>((resolve, reject) => {
     if (storage.saveWorkflow) {
       logInjectIDBBufferItemSaveYellow(`saveBufferItem(enqueued %s)`, item.id);
       storage.saveWorkflowQueue.push({ resolve, reject, saveItem: item });
@@ -135,6 +137,7 @@ function runSaveBufferItem(
     transaction: idbIndexTransaction,
     objectStore: idbIndexObjectStore,
     request: idbIndexRequest,
+    response: {},
     saveItem,
     onSaveWorkflowSuccessBinded: onSaveWorkflowSuccess.bind(thisBinded),
     onSaveWorkflowErrorBinded: onSaveWorkflowError.bind(thisBinded),
@@ -190,8 +193,8 @@ export function onSaveWorkflowSuccess(this: SaveWorkflowThis, e: Event) {
     saveWorkflow,
     storage,
   );
-  const { resolve } = saveWorkflow;
-  resolve();
+  const { resolve, response } = saveWorkflow;
+  resolve(response);
   clearSaveWorkflow(storage, saveWorkflow);
 }
 
@@ -245,13 +248,19 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
     saveWorkflow,
   );
   if (e && e.target instanceof IDBRequest) {
-    const { saveItem, objectStore } = this.saveWorkflow;
+    const { saveItem, objectStore, response } = this.saveWorkflow;
     const cursor = e.target.result;
     if (cursor instanceof IDBCursorWithValue) {
       const cursorItem: BufferStorageIDBItem = cursor.value;
       const isTypeMatch =
         cursorItem.isView === saveItem.isView &&
         cursorItem.mimeType === saveItem.mimeType;
+      if (!Array.isArray(response[cursorItem.mimeType])) {
+        response[cursorItem.mimeType] = [];
+      }
+      response[cursorItem.mimeType] = response[cursorItem.mimeType].filter(
+        (item) => item.id !== cursorItem.id,
+      );
       if (
         isTypeMatch &&
         cursorItem.viewByteOffset < saveItem.viewByteOffset &&
@@ -278,14 +287,19 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
           0,
           saveItem.viewByteOffset - cursorItem.viewByteOffset,
         );
-        // debugger;
         logInjectIDBBufferItemCursorYellow(
-          'newCursorBuffer left cursor.update()',
+          '[%s] newCursorBuffer left cursor.update(%s)',
+          saveItem.id,
+          cursorItem.id,
         );
-        cursor.update({
+        const newCursorItem: BufferStorageIDBItem = {
           ...cursorItem,
           buffer: newCursorBuffer,
-        } as BufferStorageIDBItem);
+        };
+        cursor.update(newCursorItem);
+        response[cursorItem.mimeType].push(
+          serializeBufferStorageIDBItem(newCursorItem),
+        );
         return cursor.continue();
       } else if (
         isTypeMatch &&
@@ -297,7 +311,14 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
           cursorItem.viewByteEnd === saveItem.viewByteEnd
         ) {
           // found the same item => skip iteration
-          logInjectIDBBufferItemCursorYellow('cursor skip');
+          logInjectIDBBufferItemCursorYellow(
+            '[%s] cursor.skip(%s)',
+            saveItem.id,
+            cursorItem.id,
+          );
+          response[cursorItem.mimeType].push(
+            serializeBufferStorageIDBItem(cursorItem),
+          );
           return;
         }
         /*
@@ -309,8 +330,11 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
          |--------------|
         */
         // TODO check if buffer array is the same
-        // debugger;
-        logInjectIDBBufferItemCursorRed('cursor.delete()');
+        logInjectIDBBufferItemCursorRed(
+          '[%s] cursor.delete(%s)',
+          saveItem.id,
+          cursorItem.id,
+        );
         cursor.delete();
         return cursor.continue();
       } else if (
@@ -338,20 +362,36 @@ function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
         const newCursorBuffer = cursorItem.buffer.slice(
           saveItem.viewByteEnd - cursorItem.viewByteOffset,
         );
-        // debugger;
         logInjectIDBBufferItemCursorMagenta(
-          'newCursorBuffer right cursor.update()',
+          '[%s] newCursorBuffer right cursor.update(%s)',
+          saveItem.id,
+          cursorItem.id,
         );
-        cursor.update({
+        const newCursorItem: BufferStorageIDBItem = {
           ...cursorItem,
           buffer: newCursorBuffer,
-        } as BufferStorageIDBItem);
+        };
+        response[cursorItem.mimeType].push(
+          serializeBufferStorageIDBItem(newCursorItem),
+        );
+        cursor.update(newCursorItem);
         return cursor.continue();
       }
-      logInjectIDBBufferItemCursor('cursor.continue()');
+      logInjectIDBBufferItemCursor(
+        '[%s] cursor.continue(%s)',
+        saveItem.id,
+        cursorItem.id,
+      );
+      response[cursorItem.mimeType].push(
+        serializeBufferStorageIDBItem(cursorItem),
+      );
       return cursor.continue();
     } else {
       logInjectIDBBufferItemObjectStore('objectStore.put(%s)', saveItem.id);
+      if (!Array.isArray(response[saveItem.mimeType])) {
+        response[saveItem.mimeType] = [];
+      }
+      response[saveItem.mimeType].push(serializeBufferStorageIDBItem(saveItem));
       objectStore.put(saveItem);
     }
   }
@@ -366,4 +406,17 @@ function onSaveRequestError(this: SaveWorkflowThis) {
     saveWorkflow,
   );
   clearSaveRequest(storage, saveWorkflow);
+}
+
+export function serializeBufferStorageIDBItem(
+  item: BufferStorageIDBItem,
+): TSerializedBufferStorageIDBItem {
+  return {
+    id: item.id,
+    isView: item.isView,
+    viewByteOffset: item.viewByteOffset,
+    viewByteEnd: item.viewByteEnd,
+    rawByteOffset: item.rawByteOffset,
+    rawByteEnd: item.rawByteEnd,
+  };
 }

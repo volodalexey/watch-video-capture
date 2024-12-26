@@ -1,5 +1,5 @@
-import { type TSerializedMediaStorageItem } from '@/common/message';
 import { getStorageItem } from '../extensionStorage.utils';
+import { type TExtensionMediaStorageItem } from '../mediaStorageItem/mediaStorageItem.types';
 import {
   DefaultMediaStorageItems,
   MediaStorageItemsKey,
@@ -10,5 +10,5 @@ export async function getMediaStorageItems() {
     MediaStorageItemsKey,
     DefaultMediaStorageItems,
   );
-  return response as TSerializedMediaStorageItem[];
+  return response as TExtensionMediaStorageItem[];
 }

@@ -38,6 +38,9 @@ async function start() {
           case 'mediaStorageItem':
             sendContentToBackgroundMessage(e.data);
             break;
+          case 'IDBStorageItems':
+            sendContentToBackgroundMessage(e.data);
+            break;
         }
       }
     },

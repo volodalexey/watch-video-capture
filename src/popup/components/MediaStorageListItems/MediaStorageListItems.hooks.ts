@@ -8,8 +8,8 @@ import {
 } from '@/common/extensionStorage/mediaStorageItems';
 import { WithAbortCheck } from '@/common/query';
 import { logPopupQueryGet } from '@/common/logger';
-import { TSerializedMediaStorageItem } from '@/common/message';
 import { deleteMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
+import { type TExtensionMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
 
 export function useGetMediaStorageItems() {
   const {
@@ -33,7 +33,7 @@ export function useGetMediaStorageItems() {
 export function useDeleteMediaStorageItem() {
   const { isPending, mutateAsync } = useMutation({
     mutationKey: [MediaStorageItemsQueryKey],
-    mutationFn: async (item: TSerializedMediaStorageItem) => {
+    mutationFn: async (item: TExtensionMediaStorageItem) => {
       logPopupQueryGet('useDeleteMediaStorageItem');
       const res = await deleteMediaStorageItem(item);
       return res;
@@ -41,7 +41,7 @@ export function useDeleteMediaStorageItem() {
   });
 
   const handleDeleteConfirm = useCallback(
-    async (item: TSerializedMediaStorageItem) => {
+    async (item: TExtensionMediaStorageItem) => {
       if (confirm('Delete media storage item?')) {
         await mutateAsync(item);
       }

@@ -47,19 +47,30 @@ export function clearStorage(): Promise<void> {
   return browser.storage.local.clear();
 }
 
-export async function appendOrUpdateStorageItem(
-  key: string,
-  value: unknown,
-  valueKey: string,
+export async function appendOrUpdateStorageItem({
+  key,
+  value,
+  valueKey,
+  onUpdate,
   defaultValue = [],
-) {
+}: {
+  key: string;
+  value: unknown;
+  valueKey: string;
+  onUpdate?: (value: unknown) => unknown;
+  defaultValue?: Array<unknown>;
+}) {
   const storageItems = await getStorageItem(key, defaultValue);
   if (Array.isArray(storageItems)) {
     const foundIndex = storageItems.findIndex(
       (storageItem) => storageItem[valueKey] === value[valueKey],
     );
     if (foundIndex > -1) {
-      storageItems.splice(foundIndex, 1, value);
+      storageItems.splice(
+        foundIndex,
+        1,
+        onUpdate ? onUpdate(storageItems[foundIndex]) : value,
+      );
     } else {
       storageItems.push(value);
     }
@@ -72,13 +83,13 @@ export async function appendOrUpdateStorageItem(
 export async function deleteStorageItem(
   key: string,
   value: unknown,
-  valueKey: string,
+  indexKey: string,
   defaultValue = [],
 ) {
   const storageItems = await getStorageItem(key, defaultValue);
   if (Array.isArray(storageItems)) {
     const foundIndex = storageItems.findIndex(
-      (storageItem) => storageItem[valueKey] === value[valueKey],
+      (storageItem) => storageItem[indexKey] === value[indexKey],
     );
     if (foundIndex > -1) {
       storageItems.splice(foundIndex, 1);
@@ -86,6 +97,40 @@ export async function deleteStorageItem(
       console.warn('Unable to find storage item');
     }
     await setStorageItem(key, storageItems);
+  } else {
+    console.warn('Storage data is not an array');
+  }
+}
+
+export async function updateStorageItem({
+  key,
+  valueKey,
+  value,
+  indexKey,
+  indexValue,
+  defaultValue = [],
+}: {
+  key: string;
+  valueKey: string;
+  value: unknown;
+  indexKey: string;
+  indexValue: string;
+  defaultValue?: Array<unknown>;
+}) {
+  const storageItems = await getStorageItem(key, defaultValue);
+  if (Array.isArray(storageItems)) {
+    const foundIndex = storageItems.findIndex(
+      (storageItem) => storageItem[indexKey] === indexValue,
+    );
+    if (foundIndex > -1) {
+      storageItems.splice(foundIndex, 1, {
+        ...storageItems[foundIndex],
+        [valueKey]: value,
+      });
+      await setStorageItem(key, storageItems);
+    } else {
+      console.warn('Storage data not found');
+    }
   } else {
     console.warn('Storage data is not an array');
   }

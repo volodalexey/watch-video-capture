@@ -192,7 +192,12 @@ function start() {
                 byteOffset: typedArray.byteOffset,
                 isView: true,
               }),
-            );
+            ).then((response) => {
+              sendInjectMessage({
+                type: 'IDBStorageItems',
+                payload: { mediaIdHash: item.mediaIdHash, captured: response },
+              });
+            });
           } else if (args[0] instanceof ArrayBuffer) {
             const arrayBuffer = args[0];
             saveBufferItem(
@@ -203,7 +208,12 @@ function start() {
                 buffer: arrayBuffer,
                 isView: false,
               }),
-            );
+            ).then((response) => {
+              sendInjectMessage({
+                type: 'IDBStorageItems',
+                payload: { mediaIdHash: item.mediaIdHash, captured: response },
+              });
+            });
           }
         }
       },

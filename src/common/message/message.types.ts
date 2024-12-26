@@ -6,8 +6,11 @@ export type TMessageSource =
   | 'content';
 
 type TMediaStorageItemMessageType = 'mediaStorageItem';
+type TIDBStorageItemsMessageType = 'IDBStorageItems';
 
-export type TInjectMessage = TInjectMediaStorageItemMessage;
+export type TInjectMessage =
+  | TInjectMediaStorageItemMessage
+  | TInjectIDBStorageItemsMessage;
 
 export type TSerializedTimeRanges = Array<[number, number]>;
 
@@ -26,6 +29,15 @@ export type TInjectMediaStorageItemMessage = {
   payload: TSerializedMediaStorageItem;
 };
 
+export type TInjectIDBStorageItemsMessage = {
+  source: 'inject';
+  type: TIDBStorageItemsMessageType;
+  payload: {
+    mediaIdHash: string;
+    captured: Record<string, TSerializedBufferStorageIDBItem[]>;
+  };
+};
+
 export type TContentMediaStorageItemMessage = {
   source: 'content';
   type: TMediaStorageItemMessageType;
@@ -38,9 +50,19 @@ export type TContentDownloadMediaStorageItemMessage = {
   payload: TSerializedMediaStorageItem['mediaIdHash'];
 };
 
+export type TContentIDBStorageItemsMessage = {
+  source: 'inject';
+  type: TIDBStorageItemsMessageType;
+  payload: {
+    mediaIdHash: string;
+    captured: Record<string, TSerializedBufferStorageIDBItem[]>;
+  };
+};
+
 export type TContentMessage =
   | TContentMediaStorageItemMessage
-  | TContentDownloadMediaStorageItemMessage;
+  | TContentDownloadMediaStorageItemMessage
+  | TContentIDBStorageItemsMessage;
 
 type TDownloadMediaStorageItemMessageType = 'downloadMediaStorageItem';
 
@@ -56,3 +78,12 @@ export type TMessage =
   | TInjectMediaStorageItemMessage
   | TContentMediaStorageItemMessage
   | TPopupDownloadMediaStorageItemMessage;
+
+export type TSerializedBufferStorageIDBItem = {
+  id: string;
+  isView: boolean;
+  viewByteOffset: number;
+  viewByteEnd: number;
+  rawByteOffset: number;
+  rawByteEnd: number;
+};
