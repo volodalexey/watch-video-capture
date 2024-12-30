@@ -41,3 +41,28 @@ export type SaveWorkflow = SaveWorkflowQueueItem & {
   onSaveRequestSuccessBinded: (this: SaveWorkflowThis, e: Event) => unknown;
   onSaveRequestErrorBinded: (this: SaveWorkflowThis, e: Event) => unknown;
 };
+
+export type GetWorkflowResponse<T> = Record<string, Array<T>>;
+
+export type GetWorkflowInitial = {
+  mediaIdHash: BufferStorageIDBItem['mediaIdHash'];
+  serializer?: (item: BufferStorageIDBItem) => TSerializedBufferStorageIDBItem;
+  resolve: <T>(response: GetWorkflowResponse<T>) => unknown;
+  reject: (e: Error) => unknown;
+};
+
+export type GetWorkflowThis<T> = {
+  storage: IndexedDBStorage;
+  getWorkflow: GetWorkflow<T>;
+};
+
+export type GetWorkflow<T> = GetWorkflowInitial & {
+  transaction: IDBTransaction;
+  objectStore: IDBObjectStore;
+  request: IDBRequest<IDBCursorWithValue | null>;
+  response: GetWorkflowResponse<T>;
+  onGetWorkflowSuccessBinded: (this: GetWorkflowThis<T>, e: Event) => unknown;
+  onGetWorkflowErrorBinded: (this: GetWorkflowThis<T>, e: Event) => unknown;
+  onGetRequestSuccessBinded: (this: GetWorkflowThis<T>, e: Event) => unknown;
+  onGetRequestErrorBinded: (this: GetWorkflowThis<T>, e: Event) => unknown;
+};

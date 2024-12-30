@@ -1,6 +1,7 @@
 import {
-  SaveWorkflow,
-  SaveWorkflowQueueItem,
+  type GetWorkflow,
+  type SaveWorkflow,
+  type SaveWorkflowQueueItem,
   type BufferStorageIDBItem,
 } from './IndexedDBStorage.types';
 
@@ -18,14 +19,7 @@ export class IndexedDBStorage {
   } | null = null;
   saveWorkflow: SaveWorkflow | null = null;
   saveWorkflowQueue: Array<SaveWorkflowQueueItem> = [];
-  getWorkflow: {
-    response: BufferStorageIDBItem[];
-    resolve: (items: BufferStorageIDBItem[]) => unknown;
-    reject: (e: Error) => unknown;
-    transaction: IDBTransaction;
-    objectStore: IDBObjectStore;
-    request: IDBRequest<IDBCursor>;
-  } | null = null;
+  getWorkflow: GetWorkflow | null = null;
 
   tryInit(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -112,81 +106,11 @@ export class IndexedDBStorage {
     this.clearOpenRequest();
   };
 
+  setGetWorkflow(getWorkflow: GetWorkflow | null) {
+    this.getWorkflow = getWorkflow;
+  }
+
   setSaveWorkflow(saveWorkflow: SaveWorkflow | null) {
     this.saveWorkflow = saveWorkflow;
   }
-
-  getAllByMediaIndex(
-    mediaIdHash: BufferStorageIDBItem['mediaIdHash'],
-  ): Promise<BufferStorageIDBItem[]> {
-    return new Promise((resolve, reject) => {
-      if (this.db) {
-        const idbIndexTransaction = this.db.transaction(
-          this.tableName,
-          'readonly',
-        );
-        const idbIndexObjectStore = idbIndexTransaction.objectStore(
-          this.tableName,
-        );
-        const idbIndexRequest = idbIndexObjectStore
-          .index(this.indexName)
-          .openCursor(IDBKeyRange.only(mediaIdHash));
-
-        this.getWorkflow = {
-          response: [],
-          resolve,
-          reject,
-          transaction: idbIndexTransaction,
-          objectStore: idbIndexObjectStore,
-          request: idbIndexRequest,
-        };
-        this.listenGetIndexRequest();
-      } else {
-        reject(new Error('No database'));
-      }
-    });
-  }
-
-  listenGetIndexRequest() {
-    if (this.getWorkflow) {
-      const { request } = this.getWorkflow;
-      request.addEventListener('success', this.onGetIndexSuccess);
-      request.addEventListener('error', this.onGetIndexError);
-    }
-  }
-
-  clearGetIndexRequest() {
-    if (this.getWorkflow) {
-      const { request } = this.getWorkflow;
-      request.removeEventListener('success', this.onGetIndexSuccess);
-      request.removeEventListener('error', this.onGetIndexError);
-      this.getWorkflow = null;
-    }
-  }
-
-  onGetIndexSuccess = (e: Event) => {
-    if (this.getWorkflow) {
-      const { response, resolve } = this.getWorkflow;
-      if (e && e.target instanceof IDBRequest) {
-        const cursor = e.target.result;
-        if (cursor instanceof IDBCursorWithValue) {
-          response.push(cursor.value);
-          return cursor.continue();
-        }
-        this.clearGetIndexRequest();
-        return resolve(response);
-      }
-    }
-    this.clearGetIndexRequest();
-  };
-
-  onGetIndexError = (e: Event) => {
-    if (this.getWorkflow) {
-      const { reject } = this.getWorkflow;
-      if (e && e.target instanceof IDBRequest) {
-        reject(e.target.error);
-      }
-    }
-    this.clearGetIndexRequest();
-  };
 }

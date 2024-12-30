@@ -16,43 +16,29 @@ function sorter(a: BufferStorageIDBItem, b: BufferStorageIDBItem) {
 }
 
 export function prepareDownloadPopupItems(
-  result: BufferStorageIDBItem[],
+  result: Record<string, BufferStorageIDBItem[]>,
 ): DownloadPopupItem[] {
-  const videoSegments = result.filter((segment) => segment.isVideo);
-  const audioSegments = result.filter((segment) => segment.isAudio);
-
   const downloadPopupItems: DownloadPopupItem[] = [];
-  if (videoSegments.length) {
-    videoSegments.sort(sorter);
-    const detected = getExtensionByMimeType(videoSegments[0].mimeType);
-    const blob = new Blob(
-      videoSegments.map((r) => r.buffer),
-      { type: detected?.mimeType },
-    );
-    const href = window.URL.createObjectURL(blob);
-    downloadPopupItems.push({
-      href,
-      fileSize: blob.size,
-      fileName: detected.extension
-        ? `output.${detected.extension}`
-        : 'unknown_video',
-    });
-  }
-  if (audioSegments.length) {
-    audioSegments.sort(sorter);
-    const detected = getExtensionByMimeType(audioSegments[0].mimeType);
-    const blob = new Blob(
-      audioSegments.map((r) => r.buffer),
-      { type: detected?.mimeType },
-    );
-    const href = window.URL.createObjectURL(blob);
-    downloadPopupItems.push({
-      href,
-      fileSize: blob.size,
-      fileName: detected.extension
-        ? `output.${detected.extension}`
-        : 'unknown_audio',
-    });
+  for (const mimeType of Object.getOwnPropertyNames(result)) {
+    const segments = result[mimeType];
+    if (segments.length) {
+      segments.sort(sorter);
+      const detected = getExtensionByMimeType(segments[0].mimeType);
+      const blob = new Blob(
+        segments.map((r) => r.buffer),
+        { type: detected?.mimeType },
+      );
+      const href = window.URL.createObjectURL(blob);
+      downloadPopupItems.push({
+        href,
+        fileSize: blob.size,
+        fileName: detected.extension
+          ? `output.${detected.extension}`
+          : segments[0].isVideo
+            ? 'unknown_video'
+            : 'unknown_audio',
+      });
+    }
   }
 
   return downloadPopupItems;

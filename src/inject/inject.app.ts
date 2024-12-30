@@ -10,6 +10,7 @@ import {
 import {
   IndexedDBStorage,
   createBufferItem,
+  getSerializedBufferItems,
   saveBufferItem,
 } from './IndexedDBStorage';
 import {
@@ -41,7 +42,7 @@ function start() {
 
   globalThis.addEventListener(
     'message',
-    (e) => {
+    async (e) => {
       if (isContentMessage(e.data)) {
         switch (e.data.type) {
           case 'downloadMediaStorageItem':
@@ -49,6 +50,20 @@ function start() {
             const { item } = mediaStorage.find({ mediaIdHash });
             if (item) {
               showDownloadPopup(indexedDbStorage, item);
+            }
+            break;
+          case 'refreshAllMediaStorageItems':
+            for (const item of mediaStorage.store) {
+              if (item.mediaIdHash) {
+                const captured = await getSerializedBufferItems(
+                  indexedDbStorage,
+                  item.mediaIdHash,
+                );
+                sendInjectMessage({
+                  type: 'IDBStorageItems',
+                  payload: { mediaIdHash: item.mediaIdHash, captured },
+                });
+              }
             }
             break;
         }

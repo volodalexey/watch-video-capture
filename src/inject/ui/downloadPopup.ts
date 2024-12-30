@@ -1,4 +1,4 @@
-import { type IndexedDBStorage } from '../IndexedDBStorage';
+import { getFullBufferItems, type IndexedDBStorage } from '../IndexedDBStorage';
 import { setDownloadPopupOpen, type MediaStorageItem } from '../MediaStorage';
 import { type DownloadPopupItem } from './downloadPopup.types';
 import { prepareDownloadPopupItems } from './downloadPopup.utils';
@@ -27,7 +27,7 @@ export function showDownloadPopup(
   }
   setDownloadPopupOpen(item, true);
 
-  indexedDbStorage.getAllByMediaIndex(item.mediaIdHash).then((result) => {
+  getFullBufferItems(indexedDbStorage, item.mediaIdHash).then((result) => {
     const downloadPopupItems = prepareDownloadPopupItems(result);
 
     document.body.insertAdjacentHTML(

@@ -51,7 +51,7 @@ export type TContentDownloadMediaStorageItemMessage = {
 };
 
 export type TContentIDBStorageItemsMessage = {
-  source: 'inject';
+  source: 'content';
   type: TIDBStorageItemsMessageType;
   payload: {
     mediaIdHash: string;
@@ -59,19 +59,36 @@ export type TContentIDBStorageItemsMessage = {
   };
 };
 
+export type TContentRefreshAllMediaStorageItemsMessage = {
+  source: 'content';
+  type: TRefreshAllMediaStorageItemsType;
+  payload: null;
+};
+
 export type TContentMessage =
   | TContentMediaStorageItemMessage
   | TContentDownloadMediaStorageItemMessage
-  | TContentIDBStorageItemsMessage;
+  | TContentIDBStorageItemsMessage
+  | TContentRefreshAllMediaStorageItemsMessage;
 
 type TDownloadMediaStorageItemMessageType = 'downloadMediaStorageItem';
 
-export type TPopupMessage = TPopupDownloadMediaStorageItemMessage;
+export type TPopupMessage =
+  | TPopupDownloadMediaStorageItemMessage
+  | TPopupRefreshAllMediaStorageItemsMessage;
 
 export type TPopupDownloadMediaStorageItemMessage = {
   source: 'popup';
   type: TDownloadMediaStorageItemMessageType;
   payload: TSerializedMediaStorageItem['mediaIdHash'];
+};
+
+type TRefreshAllMediaStorageItemsType = 'refreshAllMediaStorageItems';
+
+export type TPopupRefreshAllMediaStorageItemsMessage = {
+  source: 'popup';
+  type: TRefreshAllMediaStorageItemsType;
+  payload: null;
 };
 
 export type TMessage =

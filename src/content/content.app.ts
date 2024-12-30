@@ -53,6 +53,9 @@ async function start() {
         case 'downloadMediaStorageItem':
           sendContentToInjectMessage(message);
           break;
+        case 'refreshAllMediaStorageItems':
+          sendContentToInjectMessage(message);
+          break;
       }
     }
   });
