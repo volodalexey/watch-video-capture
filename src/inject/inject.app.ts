@@ -3,6 +3,7 @@ import {
   MediaStorage,
   checkMediaId,
   serializeMediaStorageItem,
+  setHTMLAudioElement,
   setHTMLVideoElement,
   setItemHtmlSourceUrl,
   setItemMediaSourceUrl,
@@ -246,6 +247,34 @@ function start() {
       },
     },
   });
+  makePropertyPatch(Element.prototype, 'setAttribute', {
+    apply: {
+      loggerBefore(_, element, args) {
+        const attributeName = args[0];
+        if (attributeName === 'src') {
+          const attributeValue = args[1];
+          const { item } = mediaStorage.find({
+            mediaSourceUrl: attributeValue,
+          });
+          if (item) {
+            if (element instanceof HTMLVideoElement) {
+              setHTMLVideoElement(item, element);
+              logInjectHtmlSourceSrc(
+                `HTMLVideoElement.setAttribute('src', %s)`,
+                attributeValue,
+              );
+            } else if (element instanceof HTMLAudioElement) {
+              setHTMLAudioElement(item, element);
+              logInjectHtmlSourceSrc(
+                `HTMLAudioElement.setAttribute('src', %s)`,
+                attributeValue,
+              );
+            }
+          }
+        }
+      },
+    },
+  });
   makeDescriptorPatch(HTMLSourceElement.prototype, 'src', {
     set: {
       loggerBefore(target, value) {
@@ -253,11 +282,12 @@ function start() {
           const { item } = mediaStorage.find({ mediaSourceUrl: value });
           if (item) {
             setItemHtmlSourceUrl(item, target);
-            if (
-              target.parentElement &&
-              target.parentElement instanceof HTMLVideoElement
-            ) {
-              setHTMLVideoElement(item, target.parentElement);
+            if (target.parentElement) {
+              if (target.parentElement instanceof HTMLVideoElement) {
+                setHTMLVideoElement(item, target.parentElement);
+              } else if (target.parentElement instanceof HTMLAudioElement) {
+                setHTMLAudioElement(item, target.parentElement);
+              }
             }
             logInjectHtmlSourceSrc(`HTMLSourceElement.src=%s`, value);
           }
@@ -274,12 +304,17 @@ function start() {
             if (target instanceof HTMLVideoElement) {
               setHTMLVideoElement(item, target);
               logInjectHtmlVideoSrc(`HTMLVideoElement.src=%s`, value);
-            } else if (
-              target.parentElement &&
-              target.parentElement instanceof HTMLVideoElement
-            ) {
-              setHTMLVideoElement(item, target.parentElement);
-              logInjectHtmlVideoSrc(`[parent]HTMLVideoElement.src=%s`, value);
+            } else if (target instanceof HTMLAudioElement) {
+              setHTMLAudioElement(item, target);
+              logInjectHtmlVideoSrc(`HTMLAudioElement.src=%s`, value);
+            } else if (target.parentElement) {
+              if (target.parentElement instanceof HTMLVideoElement) {
+                setHTMLVideoElement(item, target.parentElement);
+                logInjectHtmlVideoSrc(`[parent]HTMLVideoElement.src=%s`, value);
+              } else if (target.parentElement instanceof HTMLAudioElement) {
+                setHTMLAudioElement(item, target.parentElement);
+                logInjectHtmlVideoSrc(`[parent]HTMLAudioElement.src=%s`, value);
+              }
             }
           }
         }
@@ -306,6 +341,17 @@ function start() {
             setHTMLVideoElement(item, node);
             logInjectHtmlVideoAppend(
               `HTMLVideoElement.appendChild(HTMLSourceElement)`,
+            );
+          }
+        } else if (
+          node instanceof HTMLAudioElement &&
+          value instanceof HTMLSourceElement
+        ) {
+          const { item } = mediaStorage.find({ htmlSourceElement: value });
+          if (item) {
+            setHTMLAudioElement(item, node);
+            logInjectHtmlVideoAppend(
+              `HTMLAudioElement.appendChild(HTMLSourceElement)`,
             );
           }
         }

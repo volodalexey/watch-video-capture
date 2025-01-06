@@ -14,6 +14,7 @@ export type MediaStorageItem = {
   mediaSource?: MediaSource;
   mediaSourceUrl?: string;
   htmlVideoElement?: HTMLVideoElement;
+  htmlAudioElement?: HTMLAudioElement;
   htmlSourceElement?: HTMLSourceElement;
   info: Map<SourceBuffer, SourceBufferInfo>;
   downloadPopupOpen: boolean;

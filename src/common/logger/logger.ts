@@ -66,7 +66,7 @@ function intoInjectSourceBuffer(logName: string): string {
 
 export const logInjectSourceBufferEvent = debug(
   intoInjectSourceBuffer('event'),
-  true,
+  false,
 );
 export const logInjectSourceBufferTimestamp = debug(
   intoInjectSourceBuffer('timestamp'),
@@ -81,6 +81,7 @@ export const logInjectSourceBufferRemove = debug(
 );
 export const logInjectSourceBufferAppend = debug(
   intoInjectSourceBuffer('append'),
+  true,
 );
 
 function intoInjectMediaSource(logName: string): string {
@@ -92,6 +93,7 @@ export const logInjectMediaSourceDuration = debug(
 );
 export const logInjectMediaSourceAppend = debug(
   intoInjectMediaSource('append'),
+  true,
 );
 export const logInjectMediaSourceRemove = debug(
   intoInjectMediaSource('remove'),
@@ -145,7 +147,7 @@ export const logInjectIDBBufferItemTransactionRed = debug(
 );
 export const logInjectIDBBufferItemObjectStore = debug(
   intoInjectIDBBufferItem('objectstore'),
-  true,
+  false,
 );
 export const logInjectIDBBufferItemObjectStoreMagenta = debug(
   intoInjectIDBBufferItem('objectstore'),
@@ -168,21 +170,21 @@ export const logInjectIDBBufferItemRequestYellow = debug(
 );
 export const logInjectIDBBufferItemCursor = debug(
   intoInjectIDBBufferItem('cursor'),
-  true,
+  false,
 );
 export const logInjectIDBBufferItemCursorYellow = debug(
   intoInjectIDBBufferItem('cursor'),
-  true,
+  false,
   'yellow_2',
 );
 export const logInjectIDBBufferItemCursorMagenta = debug(
   intoInjectIDBBufferItem('cursor'),
-  true,
+  false,
   'magenta',
 );
 export const logInjectIDBBufferItemCursorRed = debug(
   intoInjectIDBBufferItem('cursor'),
-  true,
+  false,
   'red',
 );
 export const logInjectIDBBufferItemCreate = debug(

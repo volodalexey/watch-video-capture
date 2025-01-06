@@ -26,6 +26,19 @@ export function setHTMLVideoElement(
   }
 }
 
+export function setHTMLAudioElement(
+  item: MediaStorageItem,
+  htmlAudioElement: HTMLAudioElement,
+) {
+  if (item.htmlAudioElement) {
+    if (item.htmlAudioElement !== htmlAudioElement) {
+      console.warn('Different htmlAudioElement assignment');
+    }
+  } else {
+    item.htmlAudioElement = htmlAudioElement;
+  }
+}
+
 export function createSourceBufferInfo(
   sourceBufferInfo: Partial<
     Omit<SourceBufferInfo, 'mimeType' | 'isVideo' | 'isAudio' | 'onUpdateEnd'>
@@ -49,8 +62,16 @@ export function calcUniqueId(item: MediaStorageItem): string {
   let duration = 0;
   if (Number.isFinite(item.mediaSource.duration)) {
     duration = item.mediaSource.duration;
-  } else if (Number.isFinite(item.htmlVideoElement.duration)) {
+  } else if (
+    item.htmlVideoElement &&
+    Number.isFinite(item.htmlVideoElement.duration)
+  ) {
     duration = item.htmlVideoElement.duration;
+  } else if (
+    item.htmlAudioElement &&
+    Number.isFinite(item.htmlAudioElement.duration)
+  ) {
+    duration = item.htmlAudioElement.duration;
   }
   const sortedValues = Array.from(item.info.values()).sort((a, b) => {
     let aValue = a.isVideo;
@@ -99,13 +120,14 @@ function serializeTimeRanges(timeRanges: TimeRanges): Array<[number, number]> {
 export function serializeMediaStorageItem(
   item: MediaStorageItem,
 ): TSerializedMediaStorageItem {
+  const playElement = item.htmlVideoElement || item.htmlAudioElement;
   return {
     mediaId: item.mediaId,
     mediaIdHash: item.mediaIdHash,
     mediaSourceUrl: item.mediaSourceUrl,
-    duration: item.htmlVideoElement.duration,
-    buffered: serializeTimeRanges(item.htmlVideoElement.buffered),
-    seekable: serializeTimeRanges(item.htmlVideoElement.seekable),
+    duration: playElement.duration,
+    buffered: serializeTimeRanges(playElement.buffered),
+    seekable: serializeTimeRanges(playElement.seekable),
   };
 }
 
