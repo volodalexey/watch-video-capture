@@ -4,6 +4,7 @@ import {
 } from '@/common/message';
 
 export type TExtensionMediaStorageItem = {
+  originUrl: string;
   mediaId: string;
   mediaIdHash: string;
   mediaSourceUrl: string;

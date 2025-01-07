@@ -23,10 +23,15 @@ export type TSerializedMediaStorageItem = {
   seekable: TSerializedTimeRanges;
 };
 
+type TMediaStorageItemMessagePayload = {
+  originUrl: string;
+  serializedItem: TSerializedMediaStorageItem;
+};
+
 export type TInjectMediaStorageItemMessage = {
   source: 'inject';
   type: TMediaStorageItemMessageType;
-  payload: TSerializedMediaStorageItem;
+  payload: TMediaStorageItemMessagePayload;
 };
 
 export type TInjectIDBStorageItemsMessage = {
@@ -41,13 +46,13 @@ export type TInjectIDBStorageItemsMessage = {
 export type TContentMediaStorageItemMessage = {
   source: 'content';
   type: TMediaStorageItemMessageType;
-  payload: TSerializedMediaStorageItem;
+  payload: TMediaStorageItemMessagePayload;
 };
 
 export type TContentDownloadMediaStorageItemMessage = {
   source: 'content';
   type: TDownloadMediaStorageItemMessageType;
-  payload: TSerializedMediaStorageItem['mediaIdHash'];
+  payload: TDownloadMediaStorageItemMessagePayload;
 };
 
 export type TContentIDBStorageItemsMessage = {
@@ -62,39 +67,58 @@ export type TContentIDBStorageItemsMessage = {
 export type TContentRefreshAllMediaStorageItemsMessage = {
   source: 'content';
   type: TRefreshAllMediaStorageItemsType;
-  payload: null;
+  payload: TRefreshAllMediaStorageItemsPayload;
+};
+
+export type TContentClearMediaStorageItemMessage = {
+  source: 'content';
+  type: TClearMediaStorageItemMessageType;
+  payload: TClearMediaStorageItemMessagePayload;
 };
 
 export type TContentMessage =
   | TContentMediaStorageItemMessage
   | TContentDownloadMediaStorageItemMessage
   | TContentIDBStorageItemsMessage
-  | TContentRefreshAllMediaStorageItemsMessage;
+  | TContentRefreshAllMediaStorageItemsMessage
+  | TContentClearMediaStorageItemMessage;
 
 type TDownloadMediaStorageItemMessageType = 'downloadMediaStorageItem';
+type TDownloadMediaStorageItemMessagePayload = { mediaIdHash: string };
 
 export type TPopupMessage =
   | TPopupDownloadMediaStorageItemMessage
-  | TPopupRefreshAllMediaStorageItemsMessage;
+  | TPopupRefreshAllMediaStorageItemsMessage
+  | TPopupClearMediaStorageItemMessage;
 
 export type TPopupDownloadMediaStorageItemMessage = {
   source: 'popup';
   type: TDownloadMediaStorageItemMessageType;
-  payload: TSerializedMediaStorageItem['mediaIdHash'];
+  payload: TDownloadMediaStorageItemMessagePayload;
+};
+
+type TClearMediaStorageItemMessageType = 'clearMediaStorageItem';
+type TClearMediaStorageItemMessagePayload = {
+  mediaIdHash: string;
+  deleteItem: boolean;
+};
+
+export type TPopupClearMediaStorageItemMessage = {
+  source: 'popup';
+  type: TClearMediaStorageItemMessageType;
+  payload: TClearMediaStorageItemMessagePayload;
 };
 
 type TRefreshAllMediaStorageItemsType = 'refreshAllMediaStorageItems';
+type TRefreshAllMediaStorageItemsPayload = {};
 
 export type TPopupRefreshAllMediaStorageItemsMessage = {
   source: 'popup';
   type: TRefreshAllMediaStorageItemsType;
-  payload: null;
+  payload: TRefreshAllMediaStorageItemsPayload;
 };
 
-export type TMessage =
-  | TInjectMediaStorageItemMessage
-  | TContentMediaStorageItemMessage
-  | TPopupDownloadMediaStorageItemMessage;
+export type TMessage = TInjectMessage | TContentMessage | TPopupMessage;
 
 export type TSerializedBufferStorageIDBItem = {
   id: string;

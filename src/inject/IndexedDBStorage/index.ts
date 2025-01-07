@@ -1,3 +1,4 @@
+export * from './deleteBufferItem';
 export * from './getBufferItems';
 export * from './saveBufferItem';
 export * from './IndexedDBStorage.class';

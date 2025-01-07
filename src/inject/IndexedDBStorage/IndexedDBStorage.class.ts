@@ -3,6 +3,7 @@ import {
   type SaveWorkflow,
   type SaveWorkflowQueueItem,
   type BufferStorageIDBItem,
+  DeleteWorkflow,
 } from './IndexedDBStorage.types';
 
 export class IndexedDBStorage {
@@ -19,7 +20,8 @@ export class IndexedDBStorage {
   } | null = null;
   saveWorkflow: SaveWorkflow | null = null;
   saveWorkflowQueue: Array<SaveWorkflowQueueItem> = [];
-  getWorkflow: GetWorkflow | null = null;
+  getWorkflow: GetWorkflow<unknown> | null = null;
+  deleteWorkflow: DeleteWorkflow | null = null;
 
   tryInit(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -106,11 +108,15 @@ export class IndexedDBStorage {
     this.clearOpenRequest();
   };
 
-  setGetWorkflow(getWorkflow: GetWorkflow | null) {
+  setGetWorkflow(getWorkflow: GetWorkflow<unknown> | null) {
     this.getWorkflow = getWorkflow;
   }
 
   setSaveWorkflow(saveWorkflow: SaveWorkflow | null) {
     this.saveWorkflow = saveWorkflow;
+  }
+
+  setDeleteWorkflow(deleteWorkflow: DeleteWorkflow | null) {
+    this.deleteWorkflow = deleteWorkflow;
   }
 }

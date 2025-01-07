@@ -77,3 +77,32 @@ export type GetWorkflow<T> = GetWorkflowInitial & {
   onGetRequestSuccessBinded: (this: GetWorkflowThis<T>, e: Event) => unknown;
   onGetRequestErrorBinded: (this: GetWorkflowThis<T>, e: Event) => unknown;
 };
+
+export type DeleteWorkflowResponse = {
+  deleted: Array<TSerializedBufferStorageIDBItem>;
+};
+
+export type DeleteWorkflowInitial = {
+  mediaIdHash: BufferStorageIDBItem['mediaIdHash'];
+  resolve: (response: DeleteWorkflowResponse) => unknown;
+  reject: (e: Error) => unknown;
+};
+
+export type DeleteWorkflowThis = {
+  storage: IndexedDBStorage;
+  deleteWorkflow: DeleteWorkflow;
+};
+
+export type DeleteWorkflow = DeleteWorkflowInitial & {
+  transaction: IDBTransaction;
+  objectStore: IDBObjectStore;
+  request: IDBRequest<IDBCursorWithValue | null>;
+  response: DeleteWorkflowResponse;
+  onDeleteWorkflowSuccessBinded: (
+    this: DeleteWorkflowThis,
+    e: Event,
+  ) => unknown;
+  onDeleteWorkflowErrorBinded: (this: DeleteWorkflowThis, e: Event) => unknown;
+  onDeleteRequestSuccessBinded: (this: DeleteWorkflowThis, e: Event) => unknown;
+  onDeleteRequestErrorBinded: (this: DeleteWorkflowThis, e: Event) => unknown;
+};

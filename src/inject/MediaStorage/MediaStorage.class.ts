@@ -36,6 +36,10 @@ export class MediaStorage {
     return { itemIndex, item: this.store[itemIndex] };
   }
 
+  deleteItem(item: MediaStorageItem) {
+    this.store.filter((curItem) => curItem.mediaIdHash !== item.mediaIdHash);
+  }
+
   findSourceBufferInfo(sourceBuffer: SourceBuffer): ReturnType<
     MediaStorage['find']
   > & {

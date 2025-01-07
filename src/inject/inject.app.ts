@@ -11,6 +11,7 @@ import {
 import {
   IndexedDBStorage,
   createBufferItem,
+  deleteBufferItem,
   getSerializedBufferItems,
   saveBufferItem,
 } from './IndexedDBStorage';
@@ -34,6 +35,7 @@ import {
 } from '@/common/logger';
 import { showDownloadPopup } from './ui';
 import { isContentMessage, sendInjectMessage } from '@/common/message';
+import { getOriginUrl } from '@/common/url';
 
 function start() {
   const mediaStorage = new MediaStorage();
@@ -46,14 +48,15 @@ function start() {
     async (e) => {
       if (isContentMessage(e.data)) {
         switch (e.data.type) {
-          case 'downloadMediaStorageItem':
-            const mediaIdHash = e.data.payload;
+          case 'downloadMediaStorageItem': {
+            const { mediaIdHash } = e.data.payload;
             const { item } = mediaStorage.find({ mediaIdHash });
             if (item) {
               showDownloadPopup(indexedDbStorage, item);
             }
             break;
-          case 'refreshAllMediaStorageItems':
+          }
+          case 'refreshAllMediaStorageItems': {
             for (const item of mediaStorage.store) {
               if (item.mediaIdHash) {
                 const captured = await getSerializedBufferItems(
@@ -67,6 +70,22 @@ function start() {
               }
             }
             break;
+          }
+          case 'clearMediaStorageItem': {
+            const { mediaIdHash, deleteItem } = e.data.payload;
+            const { item } = mediaStorage.find({ mediaIdHash });
+            if (item) {
+              const { deleted } = await deleteBufferItem(
+                indexedDbStorage,
+                mediaIdHash,
+              );
+              console.debug(deleted);
+              if (deleteItem) {
+                mediaStorage.deleteItem(item);
+              }
+            }
+            break;
+          }
         }
       }
     },
@@ -82,7 +101,10 @@ function start() {
         const serializedMediaStorageItem = serializeMediaStorageItem(item);
         sendInjectMessage({
           type: 'mediaStorageItem',
-          payload: serializedMediaStorageItem,
+          payload: {
+            originUrl: getOriginUrl(),
+            serializedItem: serializedMediaStorageItem,
+          },
         });
         logInjectSourceBufferEvent(
           'handleSourceBufferUpdateEnd(%s)',

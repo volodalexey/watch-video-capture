@@ -10,19 +10,20 @@ browser.runtime.onInstalled.addListener(() => {
   logBackgroundApp('browser.runtime.onInstalled');
 });
 
-browser.runtime.onMessage.addListener((e: unknown) => {
-  if (isContentMessage(e)) {
-    logBackgroundApp(e);
-    switch (e.type) {
-      case 'mediaStorageItem': {
-        const serializedMediaStorageItem = e.payload;
-        saveMediaStorageItem(serializedMediaStorageItem);
-        break;
-      }
-      case 'IDBStorageItems': {
-        updateMediaStorageItem(e.payload);
-        break;
+browser.runtime.onMessage.addListener(
+  (e: unknown, sender: browser.runtime.MessageSender) => {
+    if (isContentMessage(e)) {
+      logBackgroundApp(e);
+      switch (e.type) {
+        case 'mediaStorageItem': {
+          saveMediaStorageItem(e.payload.originUrl, e.payload.serializedItem);
+          break;
+        }
+        case 'IDBStorageItems': {
+          updateMediaStorageItem(e.payload);
+          break;
+        }
       }
     }
-  }
-});
+  },
+);

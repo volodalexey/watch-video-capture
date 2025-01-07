@@ -1,8 +1,8 @@
 import { sendPopupToContentMessage } from '@/common/message';
 import { TimeRanges } from '../TimeRanges';
 import { useCallback, useMemo, useRef } from 'react';
-import { useDeleteMediaStorageItem } from '../MediaStorageListItems';
 import { type TExtensionMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
+import { useDeleteMediaStorageItem } from './MediaStorageListItem.hooks';
 
 export type MediaStorageListItemProps = {
   item: TExtensionMediaStorageItem;
@@ -22,15 +22,27 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
   const handleDownload = useCallback(() => {
     sendPopupToContentMessage({
       type: 'downloadMediaStorageItem',
-      payload: item.mediaIdHash,
+      payload: { mediaIdHash: item.mediaIdHash },
     });
   }, [item]);
 
-  const { handleDelete } = useDeleteMediaStorageItem();
+  const {
+    handleDeleteConfirm,
+    handleDeleteAndClearConfirm,
+    handleClearConfirm,
+  } = useDeleteMediaStorageItem(item);
 
   const handleDeleteItem = useCallback(() => {
-    handleDelete(item);
-  }, [item, handleDelete]);
+    handleDeleteConfirm();
+  }, [handleDeleteConfirm]);
+
+  const handleDeleteAndClearItem = useCallback(() => {
+    handleDeleteAndClearConfirm();
+  }, [handleDeleteAndClearConfirm]);
+
+  const handleClearItem = useCallback(() => {
+    handleClearConfirm();
+  }, [handleClearConfirm]);
 
   const capturedDictionary = useMemo<Record<string, string[]>>(() => {
     const capturedDictionary: Record<string, string[]> = {};
@@ -51,10 +63,23 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
           💬
         </button>
         <dialog ref={ref}>
+          <button type="button" onClick={handleOpen}>
+            ✖️ close
+          </button>
           <ul>
             <li>
               <button type="button" onClick={handleDeleteItem}>
                 ✖️ delete
+              </button>
+            </li>
+            <li>
+              <button type="button" onClick={handleDeleteAndClearItem}>
+                ✖️ delete and clear
+              </button>
+            </li>
+            <li>
+              <button type="button" onClick={handleClearItem}>
+                ✖️ clear
               </button>
             </li>
           </ul>

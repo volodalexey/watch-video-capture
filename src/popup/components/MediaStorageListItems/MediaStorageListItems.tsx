@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { MediaStorageListItem } from '../MediaStorageListItem';
 import {
   useClearMediaStorageItems,
@@ -10,6 +10,16 @@ import { sendPopupToContentMessage } from '@/common/message';
 export type MediaStorageListItemsProps = {};
 
 export function MediaStorageListItems({}: MediaStorageListItemsProps) {
+  const ref = useRef<HTMLDialogElement | null>(null);
+
+  const handleOpen = useCallback(() => {
+    if (ref?.current.open) {
+      ref?.current.close();
+    } else {
+      ref?.current.show();
+    }
+  }, []);
+
   const { mediaStorageItems, refetch } = useGetMediaStorageItems();
   const { handleClearConfirm } = useClearMediaStorageItems();
 
@@ -24,6 +34,28 @@ export function MediaStorageListItems({}: MediaStorageListItemsProps) {
 
   return (
     <>
+      <dialog ref={ref}>
+        <button type="button" onClick={handleOpen}>
+          ✖️ close
+        </button>
+        <ul>
+          <li>
+            <button type="button" onClick={handleClearConfirm}>
+              ✖️ delete all from extension
+            </button>
+          </li>
+          <li>
+            <button type="button" onClick={handleClearConfirm}>
+              ✖️ delete all from extension & tab
+            </button>
+          </li>
+          <li>
+            <button type="button" onClick={handleClearConfirm}>
+              ✖️ delete all from tab
+            </button>
+          </li>
+        </ul>
+      </dialog>
       <fieldset>
         <legend>
           total: {mediaStorageItems.length}
@@ -37,8 +69,8 @@ export function MediaStorageListItems({}: MediaStorageListItemsProps) {
           ))}
         </ul>
         {mediaStorageItems.length > 0 && (
-          <button type="button" onClick={handleClearConfirm}>
-            ✖️ delete all
+          <button type="button" onClick={handleOpen}>
+            📜 all actions
           </button>
         )}
       </fieldset>

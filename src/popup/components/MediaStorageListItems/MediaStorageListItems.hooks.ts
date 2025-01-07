@@ -8,8 +8,6 @@ import {
 } from '@/common/extensionStorage/mediaStorageItems';
 import { WithAbortCheck } from '@/common/query';
 import { logPopupQueryGet } from '@/common/logger';
-import { deleteMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
-import { type TExtensionMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
 
 export function useGetMediaStorageItems() {
   const {
@@ -30,28 +28,6 @@ export function useGetMediaStorageItems() {
   return { mediaStorageItems, isLoading, isFetching, refetch };
 }
 
-export function useDeleteMediaStorageItem() {
-  const { isPending, mutateAsync } = useMutation({
-    mutationKey: [MediaStorageItemsQueryKey],
-    mutationFn: async (item: TExtensionMediaStorageItem) => {
-      logPopupQueryGet('useDeleteMediaStorageItem');
-      const res = await deleteMediaStorageItem(item);
-      return res;
-    },
-  });
-
-  const handleDeleteConfirm = useCallback(
-    async (item: TExtensionMediaStorageItem) => {
-      if (confirm('Delete media storage item?')) {
-        await mutateAsync(item);
-      }
-    },
-    [],
-  );
-
-  return { isPending, handleDelete: mutateAsync, handleDeleteConfirm };
-}
-
 export function useClearMediaStorageItems() {
   const { isPending, mutateAsync } = useMutation({
     mutationKey: [MediaStorageItemsQueryKey],
@@ -63,7 +39,13 @@ export function useClearMediaStorageItems() {
   });
 
   const handleClearConfirm = useCallback(async () => {
-    if (confirm('Clear all media storage items?')) {
+    if (confirm('Clear all media storage items from extension?')) {
+      await mutateAsync();
+    }
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (confirm('Clear all media storage items from extension and tab?')) {
       await mutateAsync();
     }
   }, []);
