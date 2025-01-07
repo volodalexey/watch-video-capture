@@ -174,7 +174,7 @@ export const logInjectIDBBufferItemCursor = debug(
 );
 export const logInjectIDBBufferItemCursorYellow = debug(
   intoInjectIDBBufferItem('cursor'),
-  false,
+  true,
   'yellow_2',
 );
 export const logInjectIDBBufferItemCursorMagenta = debug(

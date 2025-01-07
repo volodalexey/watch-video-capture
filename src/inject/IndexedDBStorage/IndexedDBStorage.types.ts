@@ -15,6 +15,17 @@ export type BufferStorageIDBItem = {
   buffer: ArrayBufferLike;
 };
 
+type keys = keyof BufferStorageIDBItem;
+
+export type BufferStorageIDBItemOffsetStart = Extract<
+  keys,
+  'viewByteOffset' | 'rawByteOffset'
+>;
+export type BufferStorageIDBItemOffsetEnd = Extract<
+  keys,
+  'viewByteEnd' | 'rawByteEnd'
+>;
+
 export type SaveWorkflowThis = {
   storage: IndexedDBStorage;
   saveWorkflow: SaveWorkflow;

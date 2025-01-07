@@ -7,6 +7,8 @@ import {
   logInjectIDBBufferItemRequest,
 } from '@/common/logger';
 import {
+  type BufferStorageIDBItemOffsetStart,
+  type BufferStorageIDBItemOffsetEnd,
   type BufferStorageIDBItem,
   type SaveWorkflow,
   type SaveWorkflowThis,
@@ -54,130 +56,135 @@ export function onSaveRequestSuccess(this: SaveWorkflowThis, e: Event) {
     const cursor = e.target.result;
     if (cursor instanceof IDBCursorWithValue) {
       const cursorItem: BufferStorageIDBItem = cursor.value;
-      const isTypeMatch =
-        cursorItem.isView === saveItem.isView &&
-        cursorItem.mimeType === saveItem.mimeType;
+      const isTypeMatch = cursorItem.mimeType === saveItem.mimeType;
+      const isViewMatch = cursorItem.isView === saveItem.isView;
+      const isMatch = isTypeMatch && isViewMatch;
       if (!Array.isArray(response[cursorItem.mimeType])) {
         response[cursorItem.mimeType] = [];
       }
       response[cursorItem.mimeType] = response[cursorItem.mimeType].filter(
         (item) => item.id !== cursorItem.id,
       );
-      if (
-        isTypeMatch &&
-        cursorItem.viewByteOffset < saveItem.viewByteOffset &&
-        cursorItem.viewByteEnd > saveItem.viewByteOffset &&
-        saveItem.viewByteEnd > cursorItem.viewByteEnd
-      ) {
-        /*
-           |------------|
-           | cursorItem |
-           |------------|
-                   |------------|
-                   |  saveItem  |
-                   |------------|
-          */
-        /*
-           |---------------|
-           | newCursorItem | xxxxxxxxxx
-           |---------------|-------------
-                           |------------|
-                           |  saveItem  |
-                           |------------|
-          */
-        const newCursorBuffer = cursorItem.buffer.slice(
-          0,
-          saveItem.viewByteOffset - cursorItem.viewByteOffset,
-        );
-        logInjectIDBBufferItemCursorYellow(
-          '[%s] newCursorBuffer left cursor.update(%s)',
-          saveItem.id,
-          cursorItem.id,
-        );
-        const newCursorItem: BufferStorageIDBItem = {
-          ...cursorItem,
-          buffer: newCursorBuffer,
-        };
-        cursor.update(newCursorItem);
-        response[cursorItem.mimeType].push(
-          serializeBufferStorageIDBItem(newCursorItem),
-        );
-        return cursor.continue();
-      } else if (
-        isTypeMatch &&
-        cursorItem.viewByteOffset >= saveItem.viewByteOffset &&
-        cursorItem.viewByteEnd <= saveItem.viewByteEnd
-      ) {
+      const offsetKey: BufferStorageIDBItemOffsetStart = saveItem.isView
+        ? 'viewByteOffset'
+        : 'rawByteOffset';
+      const endKey: BufferStorageIDBItemOffsetEnd = saveItem.isView
+        ? 'viewByteEnd'
+        : 'rawByteEnd';
+      if (isMatch) {
         if (
-          cursorItem.viewByteOffset === saveItem.viewByteOffset &&
-          cursorItem.viewByteEnd === saveItem.viewByteEnd
+          cursorItem[offsetKey] < saveItem[offsetKey] &&
+          cursorItem[endKey] > saveItem[offsetKey] &&
+          saveItem[endKey] > cursorItem[endKey]
         ) {
-          // found the same item => skip iteration
-          logInjectIDBBufferItemCursorYellow(
-            '[%s] cursor.skip(%s)',
-            saveItem.id,
-            cursorItem.id,
-          );
-          response[cursorItem.mimeType].push(
-            serializeBufferStorageIDBItem(cursorItem),
-          );
-          return;
-        }
-        /*
-            |------------|
-            | cursorItem |
-            |------------|
-           |--------------|
-           |   saveItem   |
-           |--------------|
-          */
-        // TODO check if buffer array is the same
-        logInjectIDBBufferItemCursorRed(
-          '[%s] cursor.delete(%s)',
-          saveItem.id,
-          cursorItem.id,
-        );
-        cursor.delete();
-        return cursor.continue();
-      } else if (
-        isTypeMatch &&
-        cursorItem.viewByteOffset > saveItem.viewByteOffset &&
-        cursorItem.viewByteOffset < saveItem.viewByteEnd &&
-        cursorItem.viewByteEnd > saveItem.viewByteEnd
-      ) {
-        /*
+          /*
                |------------|
                | cursorItem |
                |------------|
-           |------------|
-           |  saveItem  |
-           |------------|
-          */
-        /*
-                        |---------------|
-              xxxxxxxxxx| newCursorItem |
-           -------------|---------------|
-           |------------|
-           |  saveItem  |
-           |------------|
-          */
-        const newCursorBuffer = cursorItem.buffer.slice(
-          saveItem.viewByteEnd - cursorItem.viewByteOffset,
-        );
-        logInjectIDBBufferItemCursorMagenta(
-          '[%s] newCursorBuffer right cursor.update(%s)',
-          saveItem.id,
-          cursorItem.id,
-        );
-        const newCursorItem: BufferStorageIDBItem = {
-          ...cursorItem,
-          buffer: newCursorBuffer,
-        };
-        response[cursorItem.mimeType].push(
-          serializeBufferStorageIDBItem(newCursorItem),
-        );
-        cursor.update(newCursorItem);
-        return cursor.continue();
+                       |------------|
+                       |  saveItem  |
+                       |------------|
+              */
+          /*
+               |---------------|
+               | newCursorItem | xxxxxxxxxx
+               |---------------|-------------
+                               |------------|
+                               |  saveItem  |
+                               |------------|
+              */
+          const newCursorBuffer = cursorItem.buffer.slice(
+            0,
+            saveItem[offsetKey] - cursorItem[offsetKey],
+          );
+          logInjectIDBBufferItemCursorYellow(
+            '[%s] newCursorBuffer left cursor.update(%s)',
+            saveItem.id,
+            cursorItem.id,
+          );
+          const newCursorItem: BufferStorageIDBItem = {
+            ...cursorItem,
+            buffer: newCursorBuffer,
+          };
+          cursor.update(newCursorItem);
+          response[cursorItem.mimeType].push(
+            serializeBufferStorageIDBItem(newCursorItem),
+          );
+          return cursor.continue();
+        } else if (
+          cursorItem[offsetKey] >= saveItem[offsetKey] &&
+          cursorItem[endKey] <= saveItem[endKey]
+        ) {
+          if (
+            cursorItem[offsetKey] === saveItem[offsetKey] &&
+            cursorItem[endKey] === saveItem[endKey]
+          ) {
+            // found the same item => skip iteration
+            logInjectIDBBufferItemCursorYellow(
+              '[%s] cursor.skip(%s)',
+              saveItem.id,
+              cursorItem.id,
+            );
+            response[cursorItem.mimeType].push(
+              serializeBufferStorageIDBItem(cursorItem),
+            );
+            return;
+          }
+          /*
+                |------------|
+                | cursorItem |
+                |------------|
+               |--------------|
+               |   saveItem   |
+               |--------------|
+              */
+          // TODO check if buffer array is the same
+          logInjectIDBBufferItemCursorRed(
+            '[%s] cursor.delete(%s)',
+            saveItem.id,
+            cursorItem.id,
+          );
+          cursor.delete();
+          return cursor.continue();
+        } else if (
+          cursorItem[offsetKey] > saveItem[offsetKey] &&
+          cursorItem[offsetKey] < saveItem[endKey] &&
+          cursorItem[endKey] > saveItem[endKey]
+        ) {
+          /*
+                   |------------|
+                   | cursorItem |
+                   |------------|
+               |------------|
+               |  saveItem  |
+               |------------|
+              */
+          /*
+                            |---------------|
+                  xxxxxxxxxx| newCursorItem |
+               -------------|---------------|
+               |------------|
+               |  saveItem  |
+               |------------|
+              */
+          const newCursorBuffer = cursorItem.buffer.slice(
+            saveItem[endKey] - cursorItem[offsetKey],
+          );
+          logInjectIDBBufferItemCursorMagenta(
+            '[%s] newCursorBuffer right cursor.update(%s)',
+            saveItem.id,
+            cursorItem.id,
+          );
+          const newCursorItem: BufferStorageIDBItem = {
+            ...cursorItem,
+            buffer: newCursorBuffer,
+          };
+          response[cursorItem.mimeType].push(
+            serializeBufferStorageIDBItem(newCursorItem),
+          );
+          cursor.update(newCursorItem);
+          return cursor.continue();
+        }
       }
       logInjectIDBBufferItemCursor(
         '[%s] cursor.continue(%s)',
