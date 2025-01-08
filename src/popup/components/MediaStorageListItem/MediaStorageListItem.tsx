@@ -32,16 +32,19 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
     handleClearConfirm,
   } = useDeleteMediaStorageItem(item);
 
-  const handleDeleteItem = useCallback(() => {
-    handleDeleteConfirm();
+  const handleDeleteItem = useCallback(async () => {
+    await handleDeleteConfirm();
+    handleOpen();
   }, [handleDeleteConfirm]);
 
-  const handleDeleteAndClearItem = useCallback(() => {
-    handleDeleteAndClearConfirm();
+  const handleDeleteAndClearItem = useCallback(async () => {
+    await handleDeleteAndClearConfirm();
+    handleOpen();
   }, [handleDeleteAndClearConfirm]);
 
-  const handleClearItem = useCallback(() => {
-    handleClearConfirm();
+  const handleClearItem = useCallback(async () => {
+    await handleClearConfirm();
+    handleOpen();
   }, [handleClearConfirm]);
 
   const capturedDictionary = useMemo<Record<string, string[]>>(() => {

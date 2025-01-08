@@ -96,13 +96,28 @@ export type DeleteWorkflowThis = {
 export type DeleteWorkflow = DeleteWorkflowInitial & {
   transaction: IDBTransaction;
   objectStore: IDBObjectStore;
-  request: IDBRequest<IDBCursorWithValue | null>;
+  requestOpen: IDBRequest<IDBCursorWithValue | null>;
+  requestDelete: IDBRequest<IDBCursorWithValue | null>;
   response: DeleteWorkflowResponse;
   onDeleteWorkflowSuccessBinded: (
     this: DeleteWorkflowThis,
     e: Event,
   ) => unknown;
   onDeleteWorkflowErrorBinded: (this: DeleteWorkflowThis, e: Event) => unknown;
-  onDeleteRequestSuccessBinded: (this: DeleteWorkflowThis, e: Event) => unknown;
-  onDeleteRequestErrorBinded: (this: DeleteWorkflowThis, e: Event) => unknown;
+  onDeleteOpenRequestSuccessBinded: (
+    this: DeleteWorkflowThis,
+    e: Event,
+  ) => unknown;
+  onDeleteOpenRequestErrorBinded: (
+    this: DeleteWorkflowThis,
+    e: Event,
+  ) => unknown;
+  onDeleteRequestSuccessBinded: (
+    this: DeleteWorkflowThis,
+    e: Event,
+  ) => unknown | null;
+  onDeleteRequestErrorBinded: (
+    this: DeleteWorkflowThis,
+    e: Event,
+  ) => unknown | null;
 };
