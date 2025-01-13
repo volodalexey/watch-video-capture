@@ -21,30 +21,39 @@ export function renderDownloadPopup(items: DownloadPopupItem[]) {
 export function showDownloadPopup(
   indexedDbStorage: IndexedDBStorage,
   item: MediaStorageItem,
+  trustedTypePolicy?: TrustedTypePolicy,
 ) {
   if (item.downloadPopupOpen) {
     return;
   }
   setDownloadPopupOpen(item, true);
 
-  getFullBufferItems(indexedDbStorage, item.mediaIdHash).then((result) => {
-    const downloadPopupItems = prepareDownloadPopupItems(result);
+  getFullBufferItems(indexedDbStorage, item.mediaIdHash)
+    .then((result) => {
+      const downloadPopupItems = prepareDownloadPopupItems(result);
+      const rawHTML = renderDownloadPopup(downloadPopupItems);
 
-    document.body.insertAdjacentHTML(
-      'afterbegin',
-      renderDownloadPopup(downloadPopupItems),
-    );
-    const dialog = document.body.children[0] as HTMLDialogElement;
-    const closeButton = dialog.querySelector<HTMLButtonElement>('button');
-    dialog.showModal();
-    closeButton.addEventListener(
-      'click',
-      () => {
-        dialog.close();
-        dialog.remove();
-        setDownloadPopupOpen(item, false);
-      },
-      { once: true },
-    );
-  });
+      document.body.insertAdjacentHTML(
+        'afterbegin',
+        trustedTypePolicy
+          ? (trustedTypePolicy.createHTML(rawHTML) as unknown as string)
+          : rawHTML,
+      );
+      const dialog = document.body.children[0] as HTMLDialogElement;
+      const closeButton = dialog.querySelector<HTMLButtonElement>('button');
+      dialog.showModal();
+      closeButton.addEventListener(
+        'click',
+        () => {
+          dialog.close();
+          dialog.remove();
+          setDownloadPopupOpen(item, false);
+        },
+        { once: true },
+      );
+    })
+    .catch((err) => {
+      setDownloadPopupOpen(item, false);
+      console.error(err);
+    });
 }

@@ -38,6 +38,12 @@ import { isContentMessage, sendInjectMessage } from '@/common/message';
 import { getOriginUrl } from '@/common/url';
 
 function start() {
+  let trustedTypePolicy: TrustedTypePolicy | undefined = undefined;
+  if ('trustedTypes' in globalThis) {
+    trustedTypePolicy = globalThis.trustedTypes.createPolicy('myEscapePolicy', {
+      createHTML: (rawString: string) => rawString,
+    });
+  }
   const mediaStorage = new MediaStorage();
   const indexedDbStorage = new IndexedDBStorage();
   indexedDbStorage.tryInit();
@@ -52,7 +58,7 @@ function start() {
             const { mediaIdHash } = e.data.payload;
             const { item } = mediaStorage.find({ mediaIdHash });
             if (item) {
-              showDownloadPopup(indexedDbStorage, item);
+              showDownloadPopup(indexedDbStorage, item, trustedTypePolicy);
             }
             break;
           }

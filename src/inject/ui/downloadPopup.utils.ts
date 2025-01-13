@@ -24,6 +24,11 @@ export function prepareDownloadPopupItems(
     if (segments.length) {
       segments.sort(sorter);
       const detected = getExtensionByMimeType(segments[0].mimeType);
+      if (!detected) {
+        throw new Error(
+          `Unable to detect extension by mime type = ${segments[0].mimeType}`,
+        );
+      }
       const blob = new Blob(
         segments.map((r) => r.buffer),
         { type: detected?.mimeType },

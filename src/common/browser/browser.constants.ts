@@ -13,4 +13,5 @@ export const MimeTypeToExtension = {
   'audio/ogg': 'ogg',
   'audio/wav': 'wav',
   'audio/opus': 'opus',
+  'audio/webm': 'webm',
 };
