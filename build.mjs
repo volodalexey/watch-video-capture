@@ -1,6 +1,6 @@
-import { access, rmdir } from 'node:fs/promises';
+import { access, rm, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import { build, defineConfig } from 'vite';
 
 const SrcDirname = 'src';
@@ -56,9 +56,25 @@ function createConfig({ inputName, inputPath, outputDirname }) {
 
 async function start() {
   try {
-    await access(distPath);
-    await rmdir(distPath, { recursive: true, force: true });
-  } catch {}
+    const manifestCommon = JSON.parse(await readFile(resolve(srcPath, './manifest.common.json'), { encoding: 'utf-8' }));
+    let manifest = Object.assign({}, manifestCommon);
+    const { TARGET_ENV } = process.env;
+    if (TARGET_ENV === 'chromium') {
+      const manifestFirefox = JSON.parse(await readFile(resolve(srcPath, './manifest.chromium.json'), { encoding: 'utf-8' }));
+      Object.assign(manifest, manifestFirefox);
+    } else if (TARGET_ENV === 'firefox') {
+      const manifestChromium = JSON.parse(await readFile(resolve(srcPath, './manifest.firefox.json'), { encoding: 'utf-8' }));
+      Object.assign(manifest, manifestChromium);
+    }
+    try {
+      await access(distPath);
+    } catch { }
+    await rm(distPath, { recursive: true, force: true });
+    await mkdir(distPath);
+    await writeFile(join(distPath, './manifest.json'), JSON.stringify(manifest, undefined, 2), { encoding: 'utf-8' });
+  } catch (err) {
+    return console.error(err)
+  }
   for (const entryPoint of entryPoints) {
     await build(createConfig(entryPoint));
   }

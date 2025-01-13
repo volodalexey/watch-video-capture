@@ -3,18 +3,8 @@
   "description": "Watch any video and capture it",
   "version": "1.0",
   "manifest_version": 3,
-  "background": {
-    "service_worker": "/background.bundle.js",
-    "type": "module"
-  },
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "/popup/index.html",
     "default_icon": {
@@ -28,23 +18,15 @@
   "content_scripts": [
     {
       "all_frames": true,
-      "matches": [
-        "*://*/*"
-      ],
+      "matches": ["*://*/*"],
       "run_at": "document_start",
-      "js": [
-        "/content.bundle.js"
-      ]
+      "js": ["/content.bundle.js"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "/inject.bundle.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["/inject.bundle.js"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

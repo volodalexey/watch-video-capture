@@ -4,8 +4,12 @@
   "version": "1.0.0",
   "description": "Watch any video and capture it",
   "scripts": {
-    "dev": "node build.mjs --watch",
-    "build": "node build.mjs"
+    "dev": "npm run dev-chromium",
+    "dev-chromium": "TARGET_ENV=chromium node build.mjs --watch",
+    "dev-firefox": "TARGET_ENV=chromium node build.mjs --watch",
+    "build": "npm run build-chromium",
+    "build-chromium": "TARGET_ENV=chromium node build.mjs",
+    "build-firefox": "TARGET_ENV=firefox node build.mjs"
   },
   "keywords": [],
   "author": "",
