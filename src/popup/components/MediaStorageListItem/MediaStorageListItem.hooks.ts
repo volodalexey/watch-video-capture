@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+
 import { MediaStorageItemQueryKey } from './MediaStorageListItem.constants';
 import {
   deleteMediaStorageItem,
@@ -8,6 +10,8 @@ import {
 import { sendPopupToContentMessage } from '@/common/message';
 
 export function useDeleteMediaStorageItem(item: TExtensionMediaStorageItem) {
+  const { t } = useTranslation();
+
   const { isPending: isDeletePending, mutateAsync: deleteAsync } = useMutation({
     mutationKey: [MediaStorageItemQueryKey, item.mediaIdHash],
     mutationFn: async () => {
@@ -17,7 +21,7 @@ export function useDeleteMediaStorageItem(item: TExtensionMediaStorageItem) {
   });
 
   const handleDeleteConfirm = useCallback(async () => {
-    if (confirm('Delete media storage item?')) {
+    if (confirm(t('tr:del_media_itm'))) {
       await deleteAsync();
     }
   }, []);
@@ -33,7 +37,7 @@ export function useDeleteMediaStorageItem(item: TExtensionMediaStorageItem) {
   });
 
   const handleClearConfirm = useCallback(async () => {
-    if (confirm('Clear media storage item?')) {
+    if (confirm(t('tr:clr_media_itm'))) {
       await clearAsync(false);
     }
   }, []);
@@ -50,7 +54,7 @@ export function useDeleteMediaStorageItem(item: TExtensionMediaStorageItem) {
   });
 
   const handleDeleteAndClearConfirm = useCallback(async () => {
-    if (confirm('Delete and clear media storage item?')) {
+    if (confirm(t('tr:del&clr_media_itm'))) {
       await deleteAndClearAsync();
     }
   }, []);

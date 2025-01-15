@@ -3,12 +3,14 @@ import { TimeRanges } from '../TimeRanges';
 import { useCallback, useMemo, useRef } from 'react';
 import { type TExtensionMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
 import { useDeleteMediaStorageItem } from './MediaStorageListItem.hooks';
+import { useTranslation } from 'react-i18next';
 
 export type MediaStorageListItemProps = {
   item: TExtensionMediaStorageItem;
 };
 
 export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement | null>(null);
 
   const handleOpen = useCallback(() => {
@@ -67,22 +69,22 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
         </button>
         <dialog ref={ref}>
           <button type="button" onClick={handleOpen}>
-            ✖️ close
+            ✖️ {t('tr:close')}
           </button>
           <ul>
             <li>
               <button type="button" onClick={handleDeleteItem}>
-                ✖️ delete
+                ✖️ {t('tr:del_itm')}
               </button>
             </li>
             <li>
               <button type="button" onClick={handleDeleteAndClearItem}>
-                ✖️ delete and clear
+                ✖️ {t('tr:del&clr_itm')}
               </button>
             </li>
             <li>
               <button type="button" onClick={handleClearItem}>
-                ✖️ clear
+                ✖️ {t('tr:clr_itm')}
               </button>
             </li>
           </ul>
@@ -94,22 +96,26 @@ export function MediaStorageListItem({ item }: MediaStorageListItemProps) {
       </div>
       <hr />
       <div>
-        <TimeRanges
-          text="Buffered:"
-          timeRanges={item.buffered}
-          duration={item.duration}
-        />
+        <TimeRanges timeRanges={item.buffered} duration={item.duration}>
+          {({ totalPercent }) => (
+            <span>
+              {t('tr:buffered')}: {totalPercent}%
+            </span>
+          )}
+        </TimeRanges>
       </div>
       <div>
-        <TimeRanges
-          text="Seekable:"
-          timeRanges={item.seekable}
-          duration={item.duration}
-        />
+        <TimeRanges timeRanges={item.seekable} duration={item.duration}>
+          {({ totalPercent }) => (
+            <span>
+              {t('tr:seekable')}: {totalPercent}%
+            </span>
+          )}
+        </TimeRanges>
       </div>
       <hr />
       <div>
-        Captured:{' '}
+        {t('tr:captured')}:{' '}
         {Object.entries(capturedDictionary).map(([key, value]) => {
           return (
             <div>

@@ -1,0 +1,22 @@
+{
+  "language": "language",
+  "russian": "russian",
+  "english": "english",
+  "total": "total",
+  "close": "close",
+  "del_all_fr_ext": "delete all from extension",
+  "del_all_fr_ext&tab": "delete all from extension & tab",
+  "del_all_fr_tab": "delete all from tab",
+  "all_actions": "all actions",
+  "clr_all_fr_ext": "Clear all media storage items from extension?",
+  "clr_all_fr_ext&tab": "Clear all media storage items from extension and tab?",
+  "del_media_itm": "Delete media storage item?",
+  "clr_media_itm": "Clear media storage item?",
+  "del&clr_media_itm": "Delete and clear media storage item?",
+  "del_itm": "delete",
+  "del&clr_itm": "delete and clear",
+  "clr_itm": "clear",
+  "buffered": "Buffered",
+  "seekable": "Seekable",
+  "captured": "Captured"
+}

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 import { MediaStorageItemsQueryKey } from './MediaStorageListItems.constants';
 import {
@@ -29,6 +30,8 @@ export function useGetMediaStorageItems() {
 }
 
 export function useClearMediaStorageItems() {
+  const { t } = useTranslation();
+
   const { isPending, mutateAsync } = useMutation({
     mutationKey: [MediaStorageItemsQueryKey],
     mutationFn: async () => {
@@ -39,13 +42,13 @@ export function useClearMediaStorageItems() {
   });
 
   const handleClearConfirm = useCallback(async () => {
-    if (confirm('Clear all media storage items from extension?')) {
+    if (confirm(t('tr:clr_all_fr_ext'))) {
       await mutateAsync();
     }
   }, []);
 
   const handleDeleteConfirm = useCallback(async () => {
-    if (confirm('Clear all media storage items from extension and tab?')) {
+    if (confirm(t('tr:clr_all_fr_ext&tab'))) {
       await mutateAsync();
     }
   }, []);
