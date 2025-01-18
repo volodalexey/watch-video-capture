@@ -36,7 +36,7 @@ In all above cases this extension should work.
 
 - Install extension
 - Reload current page with video/audio that needs to be captured
-- Rewind the video/audio to the beginning, select preffered quality and click play
+- Rewind the video/audio to the beginning, select preferred quality and click play
 - Watch/listen to the end
 - Open extension dialog, click on 💾 icon
 - You should see download modal

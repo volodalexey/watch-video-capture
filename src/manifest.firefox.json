@@ -2,5 +2,11 @@
   "background": {
     "scripts": ["/background.bundle.js"],
     "type": "module"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "watch-video-capture@example.com",
+      "strict_min_version": "130.0"
+    }
   }
 }
