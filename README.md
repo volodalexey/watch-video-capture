@@ -1,5 +1,9 @@
 # Browser extension - Watch any video and capture it
 
+- [Chrome Web Store](https://chromewebstore.google.com/detail/watch-video-capture/injfmoogklccgcgdfldnkfhhjlbmmbio)
+
+- [Firefox Extensions](https://addons.mozilla.org/en-US/firefox/addon/watch-video-capture/)
+
 ## Overview
 
 This extension captures/copies video/audio segments when they are sent into `video`/`audio` (`HTMLVideoElement`/`HTMLAudioElement`/`HTMLSourceElement`).
