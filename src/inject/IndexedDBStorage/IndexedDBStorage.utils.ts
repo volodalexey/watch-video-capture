@@ -1,7 +1,8 @@
 import { logInjectIDBBufferItemCreate } from '@/common/logger';
+import { type TSerializedBufferStorageIDBItem } from '@/common/message';
+
 import { type MediaStorageItem, type SourceBufferInfo } from '../MediaStorage';
 import { type BufferStorageIDBItem } from './IndexedDBStorage.types';
-import { type TSerializedBufferStorageIDBItem } from '@/common/message';
 
 export function createBufferItem({
   item,

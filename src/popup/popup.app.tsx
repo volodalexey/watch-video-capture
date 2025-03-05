@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+
 import { mockBrowser } from '../common/browser';
 import { App } from './App';
 

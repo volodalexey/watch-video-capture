@@ -1,4 +1,5 @@
 import { type TSerializedMediaStorageItem } from '@/common/message';
+
 import { appendOrUpdateStorageItem } from '../extensionStorage.utils';
 import { MediaStorageItemsKey } from '../mediaStorageItems';
 import { type TExtensionMediaStorageItem } from './mediaStorageItem.types';

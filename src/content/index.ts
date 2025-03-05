@@ -1,1 +1,1 @@
-import './content.app'
+import './content.app';

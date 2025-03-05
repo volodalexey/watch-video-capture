@@ -1,4 +1,5 @@
 import { TSerializedBufferStorageIDBItem } from '@/common/message';
+
 import { updateStorageItem } from '../extensionStorage.utils';
 import { MediaStorageItemsKey } from '../mediaStorageItems';
 

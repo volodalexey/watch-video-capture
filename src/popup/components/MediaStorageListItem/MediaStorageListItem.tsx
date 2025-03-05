@@ -1,9 +1,10 @@
-import { sendPopupToContentMessage } from '@/common/message';
-import { TimeRanges } from '../TimeRanges';
-import { useCallback, useMemo, useRef } from 'react';
 import { type TExtensionMediaStorageItem } from '@/common/extensionStorage/mediaStorageItem';
-import { useDeleteMediaStorageItem } from './MediaStorageListItem.hooks';
+import { sendPopupToContentMessage } from '@/common/message';
+import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { TimeRanges } from '../TimeRanges';
+import { useDeleteMediaStorageItem } from './MediaStorageListItem.hooks';
 
 export type MediaStorageListItemProps = {
   item: TExtensionMediaStorageItem;

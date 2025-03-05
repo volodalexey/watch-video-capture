@@ -1,1 +1,1 @@
-import './background.app'
+import './background.app';

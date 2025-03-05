@@ -66,18 +66,24 @@ function intoInjectSourceBuffer(logName: string): string {
 
 export const logInjectSourceBufferEvent = debug(
   intoInjectSourceBuffer('event'),
-  false,
+  true,
 );
 export const logInjectSourceBufferTimestamp = debug(
   intoInjectSourceBuffer('timestamp'),
+  true,
 );
 export const logInjectSourceBufferChange = debug(
   intoInjectSourceBuffer('change'),
-  false,
+  true,
 );
 export const logInjectSourceBufferRemove = debug(
   intoInjectSourceBuffer('remove'),
-  false,
+  true,
+);
+export const logInjectSourceBufferRemoveRed = debug(
+  intoInjectSourceBuffer('remove'),
+  true,
+  'red',
 );
 export const logInjectSourceBufferAppend = debug(
   intoInjectSourceBuffer('append'),
@@ -90,6 +96,7 @@ function intoInjectMediaSource(logName: string): string {
 
 export const logInjectMediaSourceDuration = debug(
   intoInjectMediaSource('duration'),
+  true,
 );
 export const logInjectMediaSourceAppend = debug(
   intoInjectMediaSource('append'),
@@ -97,6 +104,7 @@ export const logInjectMediaSourceAppend = debug(
 );
 export const logInjectMediaSourceRemove = debug(
   intoInjectMediaSource('remove'),
+  true,
 );
 export const logInjectMediaSourceEnd = debug(intoInjectMediaSource('end'));
 export const logInjectMediaSourceRange = debug(intoInjectMediaSource('range'));
@@ -111,11 +119,15 @@ function intoInjectHtmlVideo(logName: string): string {
   return `${intoInjectHtml('video-')}${logName}`;
 }
 
-export const logInjectHtmlSourceSrc = debug(intoInjectHtml('source-src'));
-export const logInjectHtmlVideoSrc = debug(intoInjectHtmlVideo('src'));
-export const logInjectHtmlVideoAppend = debug(intoInjectHtmlVideo('append'));
+export const logInjectHtmlSourceSrc = debug(intoInjectHtml('source-src'), true);
+export const logInjectHtmlVideoSrc = debug(intoInjectHtmlVideo('src'), true);
+export const logInjectHtmlVideoAppend = debug(
+  intoInjectHtmlVideo('append'),
+  true,
+);
 export const logInjectHtmlMediaDuration = debug(
   intoInjectHtml('media-duration'),
+  true,
 );
 
 function intoInjectIndexedDB(logName: string): string {
@@ -128,49 +140,49 @@ function intoInjectIDBBufferItem(logName: string): string {
 
 export const logInjectIDBBufferItemTransaction = debug(
   intoInjectIDBBufferItem('transaction'),
-  false,
+  true,
 );
 export const logInjectIDBBufferItemTransactionGreen = debug(
   intoInjectIDBBufferItem('transaction'),
-  false,
+  true,
   'green',
 );
 export const logInjectIDBBufferItemTransactionYellow = debug(
   intoInjectIDBBufferItem('transaction'),
-  false,
+  true,
   'yellow_1',
 );
 export const logInjectIDBBufferItemTransactionRed = debug(
   intoInjectIDBBufferItem('transaction'),
-  false,
+  true,
   'red',
 );
 export const logInjectIDBBufferItemObjectStore = debug(
   intoInjectIDBBufferItem('objectstore'),
-  false,
+  true,
 );
 export const logInjectIDBBufferItemObjectStoreMagenta = debug(
   intoInjectIDBBufferItem('objectstore'),
-  false,
+  true,
   'magenta',
 );
 export const logInjectIDBBufferItemRequest = debug(
   intoInjectIDBBufferItem('request'),
-  false,
+  true,
 );
 export const logInjectIDBBufferItemRequestGreen = debug(
   intoInjectIDBBufferItem('request'),
-  false,
+  true,
   'green',
 );
 export const logInjectIDBBufferItemRequestYellow = debug(
   intoInjectIDBBufferItem('request'),
-  false,
+  true,
   'yellow_2',
 );
 export const logInjectIDBBufferItemCursor = debug(
   intoInjectIDBBufferItem('cursor'),
-  false,
+  true,
 );
 export const logInjectIDBBufferItemCursorYellow = debug(
   intoInjectIDBBufferItem('cursor'),
@@ -179,34 +191,34 @@ export const logInjectIDBBufferItemCursorYellow = debug(
 );
 export const logInjectIDBBufferItemCursorMagenta = debug(
   intoInjectIDBBufferItem('cursor'),
-  false,
+  true,
   'magenta',
 );
 export const logInjectIDBBufferItemCursorRed = debug(
   intoInjectIDBBufferItem('cursor'),
-  false,
+  true,
   'red',
 );
 export const logInjectIDBBufferItemCreate = debug(
   intoInjectIDBBufferItem('create'),
-  false,
+  true,
 );
 export const logInjectIDBBufferItemSave = debug(
   intoInjectIDBBufferItem('save'),
 );
 export const logInjectIDBBufferItemSaveYellow = debug(
   intoInjectIDBBufferItem('save'),
-  false,
+  true,
   'yellow_1',
 );
 export const logInjectIDBBufferItemSaveMagenta = debug(
   intoInjectIDBBufferItem('save'),
-  false,
+  true,
   'magenta',
 );
 export const logInjectIDBBufferItemSaveRed = debug(
   intoInjectIDBBufferItem('save'),
-  false,
+  true,
   'red',
 );
 export const logPopupQueryGet = debug(intoPopupName('query-get'));

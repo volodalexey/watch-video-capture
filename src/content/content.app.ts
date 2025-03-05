@@ -1,5 +1,6 @@
-import { logContentApp } from '@/common/logger';
 import { mockBrowser } from '@/common/browser';
+import { logContentApp } from '@/common/logger';
+
 import {
   isInjectMessage,
   isPopupMessage,

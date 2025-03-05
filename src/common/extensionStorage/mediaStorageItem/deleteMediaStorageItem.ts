@@ -1,4 +1,5 @@
 import { TSerializedMediaStorageItem } from '@/common/message';
+
 import { deleteStorageItem } from '../extensionStorage.utils';
 import { MediaStorageItemsKey } from '../mediaStorageItems';
 

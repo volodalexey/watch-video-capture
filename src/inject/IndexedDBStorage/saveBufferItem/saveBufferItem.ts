@@ -3,6 +3,7 @@ import {
   logInjectIDBBufferItemSaveMagenta,
   logInjectIDBBufferItemSaveYellow,
 } from '@/common/logger';
+
 import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import {
   type SaveWorkflowResponse,
@@ -12,15 +13,15 @@ import {
   type SaveWorkflowThis,
 } from '../IndexedDBStorage.types';
 import {
-  listenSaveWorkflow,
-  onSaveWorkflowError,
-  onSaveWorkflowSuccess,
-} from './saveBufferItem.workflow';
-import {
   listenSaveRequest,
   onSaveRequestError,
   onSaveRequestSuccess,
 } from './saveBufferItem.request';
+import {
+  listenSaveWorkflow,
+  onSaveWorkflowError,
+  onSaveWorkflowSuccess,
+} from './saveBufferItem.workflow';
 
 export function saveBufferItem(
   storage: IndexedDBStorage,

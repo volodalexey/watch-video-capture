@@ -1,4 +1,3 @@
-import { TSerializedBufferStorageIDBItem } from '@/common/message';
 import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import {
   type DeleteWorkflow,

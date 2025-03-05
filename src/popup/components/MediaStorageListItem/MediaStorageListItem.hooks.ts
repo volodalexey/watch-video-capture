@@ -1,13 +1,13 @@
-import { useCallback } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-
-import { MediaStorageItemQueryKey } from './MediaStorageListItem.constants';
 import {
   deleteMediaStorageItem,
   type TExtensionMediaStorageItem,
 } from '@/common/extensionStorage/mediaStorageItem';
 import { sendPopupToContentMessage } from '@/common/message';
+import { useMutation } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { MediaStorageItemQueryKey } from './MediaStorageListItem.constants';
 
 export function useDeleteMediaStorageItem(item: TExtensionMediaStorageItem) {
   const { t } = useTranslation();

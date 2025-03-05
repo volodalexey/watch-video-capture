@@ -1,1 +1,1 @@
-export * from './patch.utils'
+export * from './patch.utils';

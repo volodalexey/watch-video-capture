@@ -1,8 +1,11 @@
-import { MediaStorageListItems } from './components/MediaStorageListItems';
-import './styles.css';
-import { initI18n } from './i18n';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/common/query/queryClient';
+
+import './styles.css';
+
+import { QueryClientProvider } from '@tanstack/react-query';
+
+import { MediaStorageListItems } from './components/MediaStorageListItems';
+import { initI18n } from './i18n';
 
 initI18n();
 

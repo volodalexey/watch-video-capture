@@ -1,11 +1,12 @@
 import { hashCode } from '@/common/browser';
+import { TSerializedMediaStorageItem } from '@/common/message';
+
 import { isAudioSourceBuffer, isVideoSourceBuffer } from '../detect';
 import {
   type MediaStorageItem,
   type PartialMediaStorageItem,
   type SourceBufferInfo,
 } from './MediaStorage.types';
-import { TSerializedMediaStorageItem } from '@/common/message';
 
 export function createMediaItem(
   partial: PartialMediaStorageItem = {},
@@ -74,8 +75,8 @@ export function calcUniqueId(item: MediaStorageItem): string {
     duration = item.htmlAudioElement.duration;
   }
   const sortedValues = Array.from(item.info.values()).sort((a, b) => {
-    let aValue = a.isVideo;
-    let bValue = b.isVideo;
+    const aValue = a.isVideo;
+    const bValue = b.isVideo;
     if (aValue === bValue) {
       return 0;
     }

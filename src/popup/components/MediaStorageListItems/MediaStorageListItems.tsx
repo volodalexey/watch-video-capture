@@ -1,3 +1,10 @@
+import { useExtensionStorage } from '@/common/extensionStorage/extensionStorage.hooks';
+import { sendPopupToContentMessage } from '@/common/message';
+import {
+  I18NextLanguage,
+  isI18NextLng,
+  saveLocalStorageLng,
+} from '@/popup/i18n';
 import { ChangeEvent, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,17 +13,8 @@ import {
   useClearMediaStorageItems,
   useGetMediaStorageItems,
 } from './MediaStorageListItems.hooks';
-import { useExtensionStorage } from '@/common/extensionStorage/extensionStorage.hooks';
-import { sendPopupToContentMessage } from '@/common/message';
-import {
-  I18NextLanguage,
-  isI18NextLng,
-  saveLocalStorageLng,
-} from '@/popup/i18n';
 
-export type MediaStorageListItemsProps = {};
-
-export function MediaStorageListItems({}: MediaStorageListItemsProps) {
+export function MediaStorageListItems() {
   const { t, i18n } = useTranslation();
   const ref = useRef<HTMLDialogElement | null>(null);
 

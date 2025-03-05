@@ -3,11 +3,12 @@ import {
   logInjectIDBBufferItemTransactionGreen,
   logInjectIDBBufferItemTransactionRed,
 } from '@/common/logger';
+
+import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import {
   type SaveWorkflowThis,
   type SaveWorkflow,
 } from '../IndexedDBStorage.types';
-import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import { checkNextSaveBufferItem } from './saveBufferItem';
 
 export function listenSaveWorkflow(saveWorkflow: SaveWorkflow) {
@@ -46,7 +47,7 @@ function clearSaveWorkflow(
   checkNextSaveBufferItem(storage);
 }
 
-export function onSaveWorkflowSuccess(this: SaveWorkflowThis, e: Event) {
+export function onSaveWorkflowSuccess(this: SaveWorkflowThis) {
   const { storage, saveWorkflow } = this;
   logInjectIDBBufferItemTransactionGreen(
     'onSaveWorkflowSuccess() %s %s',

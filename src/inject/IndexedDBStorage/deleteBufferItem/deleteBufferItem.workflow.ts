@@ -32,7 +32,7 @@ function clearDeleteWorkflow(
   storage.setDeleteWorkflow(null);
 }
 
-export function onDeleteWorkflowSuccess(this: DeleteWorkflowThis, e: Event) {
+export function onDeleteWorkflowSuccess(this: DeleteWorkflowThis) {
   const { storage, deleteWorkflow } = this;
   const { resolve, response } = deleteWorkflow;
   resolve(response);

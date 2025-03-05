@@ -1,1 +1,1 @@
-import './inject.app'
+import './inject.app';

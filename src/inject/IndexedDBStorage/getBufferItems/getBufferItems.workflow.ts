@@ -26,7 +26,7 @@ function clearGetWorkflow<T>(
   storage.setGetWorkflow(null);
 }
 
-export function onGetWorkflowSuccess<T>(this: GetWorkflowThis<T>, e: Event) {
+export function onGetWorkflowSuccess<T>(this: GetWorkflowThis<T>) {
   const { storage, getWorkflow } = this;
   const { resolve, response } = getWorkflow;
   resolve(response);

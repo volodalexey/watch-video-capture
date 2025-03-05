@@ -6,6 +6,8 @@ import {
   logInjectIDBBufferItemObjectStore,
   logInjectIDBBufferItemRequest,
 } from '@/common/logger';
+
+import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import {
   type BufferStorageIDBItemOffsetStart,
   type BufferStorageIDBItemOffsetEnd,
@@ -13,7 +15,6 @@ import {
   type SaveWorkflow,
   type SaveWorkflowThis,
 } from '../IndexedDBStorage.types';
-import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import { serializeBufferStorageIDBItem } from '../IndexedDBStorage.utils';
 
 export function listenSaveRequest(saveWorkflow: SaveWorkflow) {

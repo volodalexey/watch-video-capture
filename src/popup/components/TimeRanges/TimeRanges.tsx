@@ -1,11 +1,10 @@
+import { TSerializedTimeRanges } from '@/common/message';
 import { type ReactNode, useMemo } from 'react';
 
-import { TSerializedTimeRanges } from '@/common/message';
 import {
   RectHeight,
   RectWidth,
   Space,
-  TextHeight,
   TextWidth,
 } from './TimeRanges.constants';
 
@@ -21,7 +20,6 @@ export function TimeRanges({
   children,
 }: TimeRangesProps) {
   const durationRelation = RectWidth / duration;
-  const textY = RectHeight / 2 + TextHeight / 2;
   const { ranges, totalRange } = useMemo(() => {
     let totalRange = 0;
     const ranges: Array<{ start: number; end: number; diff: number }> =

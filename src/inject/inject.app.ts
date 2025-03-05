@@ -1,20 +1,3 @@
-import { makeDescriptorPatch, makePropertyPatch } from './patch';
-import {
-  MediaStorage,
-  checkMediaId,
-  serializeMediaStorageItem,
-  setHTMLAudioElement,
-  setHTMLVideoElement,
-  setItemHtmlSourceUrl,
-  setItemMediaSourceUrl,
-} from './MediaStorage';
-import {
-  IndexedDBStorage,
-  createBufferItem,
-  deleteBufferItem,
-  getSerializedBufferItems,
-  saveBufferItem,
-} from './IndexedDBStorage';
 import {
   logInjectApp,
   logInjectSourceBufferTimestamp,
@@ -33,9 +16,27 @@ import {
   logInjectHtmlMediaDuration,
   logInjectHtmlVideoAppend,
 } from '@/common/logger';
-import { showDownloadPopup } from './ui';
 import { isContentMessage, sendInjectMessage } from '@/common/message';
 import { getOriginUrl } from '@/common/url';
+
+import {
+  IndexedDBStorage,
+  createBufferItem,
+  deleteBufferItem,
+  getSerializedBufferItems,
+  saveBufferItem,
+} from './IndexedDBStorage';
+import {
+  MediaStorage,
+  checkMediaId,
+  serializeMediaStorageItem,
+  setHTMLAudioElement,
+  setHTMLVideoElement,
+  setItemHtmlSourceUrl,
+  setItemMediaSourceUrl,
+} from './MediaStorage';
+import { makeDescriptorPatch, makePropertyPatch } from './patch';
+import { showDownloadPopup } from './ui';
 
 function start() {
   let trustedTypePolicy: TrustedTypePolicy | undefined = undefined;
@@ -122,11 +123,17 @@ function start() {
 
   makeDescriptorPatch(SourceBuffer.prototype, 'timestampOffset', {
     set: {
-      loggerBefore(_, value) {
-        logInjectSourceBufferTimestamp(
-          `SourceBuffer.timestampOffset=%s`,
-          value,
-        );
+      loggerBefore(target, value) {
+        if (target instanceof SourceBuffer) {
+          const { sourceBufferInfo } =
+            mediaStorage.findSourceBufferInfo(target);
+          if (sourceBufferInfo) {
+            logInjectSourceBufferTimestamp(
+              `SourceBuffer(${sourceBufferInfo.mimeType}).timestampOffset=%s`,
+              value,
+            );
+          }
+        }
       },
     },
   });

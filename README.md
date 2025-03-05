@@ -45,10 +45,12 @@ In all above cases this extension should work.
 - Open extension dialog, click on 💾 icon
 - You should see download modal
 - Click on `output` files video/audio if available
-- Merge downloaded video and audio into one file with external program (e.g. `ffmpeg -i output.mp4 -i output.m4a -map 0:v -map 1:a -c copy -shortest merged.mkv`)
+- Merge downloaded video and audio into one file with external program (e.g. `ffmpeg -i video.mp4 -i audio.m4a -map 0:v -map 1:a -c copy -shortest merged.mkv`)
 
 ## Caveats
 
+- Use this extension only if you need to capture video/audio segments. Using it on daily basis overflow your storage (IndexedDB)!
+- Clear all captured items when they don't need anymore
 - Size of segments that can be stored in browser depends on the browser
 
 # How it works

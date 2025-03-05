@@ -110,7 +110,7 @@ export type TPopupClearMediaStorageItemMessage = {
 };
 
 type TRefreshAllMediaStorageItemsType = 'refreshAllMediaStorageItems';
-type TRefreshAllMediaStorageItemsPayload = {};
+type TRefreshAllMediaStorageItemsPayload = object;
 
 export type TPopupRefreshAllMediaStorageItemsMessage = {
   source: 'popup';

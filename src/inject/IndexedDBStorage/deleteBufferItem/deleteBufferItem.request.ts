@@ -1,4 +1,5 @@
 import { logInjectIDBBufferItemCursorMagenta } from '@/common/logger';
+
 import { type IndexedDBStorage } from '../IndexedDBStorage.class';
 import {
   type DeleteWorkflowThis,

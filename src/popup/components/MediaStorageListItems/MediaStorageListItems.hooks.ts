@@ -1,14 +1,14 @@
-import { useCallback } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-
-import { MediaStorageItemsQueryKey } from './MediaStorageListItems.constants';
 import {
   clearMediaStorageItems,
   getMediaStorageItems,
 } from '@/common/extensionStorage/mediaStorageItems';
-import { WithAbortCheck } from '@/common/query';
 import { logPopupQueryGet } from '@/common/logger';
+import { WithAbortCheck } from '@/common/query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { MediaStorageItemsQueryKey } from './MediaStorageListItems.constants';
 
 export function useGetMediaStorageItems() {
   const {
@@ -53,5 +53,10 @@ export function useClearMediaStorageItems() {
     }
   }, []);
 
-  return { isPending, handleClear: mutateAsync, handleClearConfirm };
+  return {
+    isPending,
+    handleClear: mutateAsync,
+    handleClearConfirm,
+    handleDeleteConfirm,
+  };
 }

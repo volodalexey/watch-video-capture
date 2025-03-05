@@ -1,4 +1,5 @@
 import { getExtensionByMimeType } from '@/common/browser';
+
 import { type BufferStorageIDBItem } from '../IndexedDBStorage';
 import { type DownloadPopupItem } from './downloadPopup.types';
 
@@ -34,12 +35,13 @@ export function prepareDownloadPopupItems(
         { type: detected?.mimeType },
       );
       const href = window.URL.createObjectURL(blob);
+      const isVideoDetected = segments[0].isVideo;
       downloadPopupItems.push({
         href,
         fileSize: blob.size,
         fileName: detected.extension
-          ? `output.${detected.extension}`
-          : segments[0].isVideo
+          ? `${isVideoDetected ? 'video' : 'audio'}.${detected.extension}`
+          : isVideoDetected
             ? 'unknown_video'
             : 'unknown_audio',
       });

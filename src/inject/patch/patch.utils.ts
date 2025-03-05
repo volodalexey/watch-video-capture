@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function makeDescriptorPatch<T, K extends keyof T>(
   objectIn: T,
   objectInProperty: K,

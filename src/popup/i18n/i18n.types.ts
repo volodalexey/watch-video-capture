@@ -1,12 +1,14 @@
 import tr from './en/translation.en.json';
 
-const resources = {
-  tr,
-} as const;
+// const resources = {
+//   tr,
+// } as const;
 
 declare module 'i18next' {
   interface CustomTypeOptions {
-    resources: typeof resources;
+    resources: {
+      tr: typeof tr;
+    };
   }
 }
 
